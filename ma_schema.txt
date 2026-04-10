@@ -1,0 +1,26 @@
+[
+  {
+    "column_name": "id",
+    "data_type": "integer"
+  },
+  {
+    "column_name": "item_name",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "brand_name",
+    "data_type": "character varying"
+  },
+  {
+    "column_name": "price",
+    "data_type": "numeric"
+  },
+  {
+    "column_name": "stock",
+    "data_type": "integer"
+  },
+  {
+    "column_name": "company_name",
+    "data_type": "character varying"
+  }
+]

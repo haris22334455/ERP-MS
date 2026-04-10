@@ -1,0 +1,18 @@
+# Node modules
+node_modules/
+ma-traders-frontend/node_modules/
+
+# Environment files
+.env
+
+# Build output
+ma-traders-frontend/build/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db

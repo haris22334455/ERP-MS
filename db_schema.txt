@@ -1,0 +1,35 @@
+[
+  {
+    "column_name": "order_id"
+  },
+  {
+    "column_name": "shop_id"
+  },
+  {
+    "column_name": "total_amount"
+  },
+  {
+    "column_name": "status"
+  },
+  {
+    "column_name": "order_date"
+  },
+  {
+    "column_name": "user_id"
+  },
+  {
+    "column_name": "item_id"
+  },
+  {
+    "column_name": "order_id"
+  },
+  {
+    "column_name": "product_id"
+  },
+  {
+    "column_name": "quantity"
+  },
+  {
+    "column_name": "price_at_sale"
+  }
+]
