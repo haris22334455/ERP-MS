@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FaHome, FaStore, FaShoppingCart, FaClipboardList, FaChartLine, FaSignOutAlt, FaChevronLeft, FaChevronRight, FaUsers, FaBoxes } from 'react-icons/fa';
+import Swal from 'sweetalert2';
+import toast from 'react-hot-toast';
 
 const Sidebar = ({ isCollapsed, toggleCollapse }) => {
     const location = useLocation();
@@ -20,8 +22,10 @@ const Sidebar = ({ isCollapsed, toggleCollapse }) => {
 
     const navItems = allNavItems.filter(item => item.roles.includes(role));
 
-    const handleLogout = () => {
-        if (window.confirm("Are you sure you want to logout?")) {
+    const handleLogout = async () => {
+        const result = await Swal.fire({title: 'Are you sure?', text: "Are you sure you want to logout?", icon: 'warning', showCancelButton: true, background: 'rgba(255,255,255,0.9)', backdrop: 'rgba(0,0,0,0.4)', customClass: { popup: 'glass-form-card', title: 'gradient-title', confirmButton: 'btn-gradient-success', cancelButton: 'btn-gradient-danger' }, confirmButtonText: 'Yes, proceed!'});
+        if (result.isConfirmed) {
+
             localStorage.clear();
             window.location.href = '/';
         }

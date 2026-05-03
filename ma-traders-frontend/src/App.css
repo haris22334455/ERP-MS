@@ -56,7 +56,7 @@
 
 body {
   margin: 0;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
   background-color: var(--bg-body);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;

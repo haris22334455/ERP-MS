@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import Swal from 'sweetalert2';
+import toast from 'react-hot-toast';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -8,10 +10,10 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      // Backend ko request bhejna
+      // Sending request to backend
       const res = await axios.post('/login', { username, password });
 
-      // Token save karna
+      // Saving token and user info
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('role', res.data.user.role);
       localStorage.setItem('user_id', res.data.user.id);
@@ -19,10 +21,10 @@ const Login = () => {
         localStorage.setItem('shop_id', res.data.user.shop_id);
       }
 
-      alert("Login Successful! Token Saved.");
-      window.location.href = "/dashboard"; // Dashboard par bhejna
+      toast.success("Login Successful! Token Saved.");
+      window.location.href = "/dashboard"; // Redirecting to dashboard
     } catch (err) {
-      alert("Invalid Credentials");
+      toast.error("Invalid Credentials");
     }
   };
 

@@ -3,6 +3,8 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import API_BASE_URL from '../config';
 import DataGrid from '../components/DataGrid';
+import Swal from 'sweetalert2';
+import toast from 'react-hot-toast';
 
 const Shops = () => {
     const [shops, setShops] = useState([]);
@@ -31,23 +33,23 @@ const Shops = () => {
             const shopRes = await axios.post(`${API_BASE_URL}/add-shop`, newShop);
 
             // Try to one retrieved ID from response, otherwise fetch all shops to find it
-            let newShopId = shopRes.data.shop_id || shopRes.data.id;
+            let newShopId = shopRes.data.shopId || shopRes.data.shop_id || shopRes.data.id;
 
             if (!newShopId) {
                 // Fallback: Fetch all shops and find the one we just created by name
                 const allShopsRes = await axios.get(`${API_BASE_URL}/shops`);
-                const createdShop = allShopsRes.data.find(s => s.shop_name === newShop.shop_name);
+                const createdShop = allShopsRes.data.find(s => (s.shopName || s.shop_name) === newShop.shop_name);
                 if (createdShop) {
-                    newShopId = createdShop.shop_id;
+                    newShopId = createdShop.shopId || createdShop.shop_id;
                 }
             }
 
-            alert("Shop Added Successfully!");
+            toast.success("Shop Added Successfully!");
 
             // 2. Create Shopkeeper Account (if selected)
             if (createAccount && shopkeeperData.username && shopkeeperData.password) {
                 if (!newShopId) {
-                    alert("Could not retrieve Shop ID. Please create user manually in 'Manage Users'.");
+                    toast("Could not retrieve Shop ID. Please create user manually in 'Manage Users'.");
                 } else {
                     try {
                         const registerPayload = {
@@ -60,12 +62,12 @@ const Shops = () => {
                         console.log("Sending Register Payload:", registerPayload);
 
                         await axios.post(`${API_BASE_URL}/register`, registerPayload);
-                        alert("Shopkeeper Account Created Successfully!");
+                        toast.success("Shopkeeper Account Created Successfully!");
                     } catch (userErr) {
                         console.error("Error creating user:", userErr);
                         // Stringify the error details so user can see/screenshot them
                         const errorDetails = userErr.response?.data ? JSON.stringify(userErr.response.data) : userErr.message;
-                        alert(`Shop created, but User Account FAILED:\n${errorDetails}`);
+                        toast.error(`Shop created, but User Account FAILED:\n${errorDetails}`);
                     }
                 }
             }
@@ -79,33 +81,35 @@ const Shops = () => {
         } catch (err) {
             console.error(err);
             const errorDetails = err.response?.data ? JSON.stringify(err.response.data) : err.message;
-            alert(`Error adding shop:\n${errorDetails}`);
+            toast.error(`Error adding shop:\n${errorDetails}`);
         }
     };
 
     const handleDeleteShop = async (id) => {
-        if (window.confirm("Are you sure you want to delete this shop? This action cannot be undone.")) {
+        const result = await Swal.fire({title: 'Are you sure?', text: "Are you sure you want to delete this shop? This action cannot be undone.", icon: 'warning', showCancelButton: true, background: 'rgba(255,255,255,0.9)', backdrop: 'rgba(0,0,0,0.4)', customClass: { popup: 'glass-form-card', title: 'gradient-title', confirmButton: 'btn-gradient-success', cancelButton: 'btn-gradient-danger' }, confirmButtonText: 'Yes, proceed!'});
+        if (result.isConfirmed) {
+
             try {
                 // Try standard REST plural
                 await axios.delete(`${API_BASE_URL}/shops/${id}`);
-                alert("Shop Deleted Successfully");
+                toast.success("Shop Deleted Successfully");
                 fetchShops();
             } catch (err) {
                 console.warn("Standard delete failed, trying fallback...", err);
                 try {
                     // Try singular 'shop' endpoint (common inconsistency)
                     await axios.delete(`${API_BASE_URL}/shop/${id}`);
-                    alert("Shop Deleted Successfully");
+                    toast.success("Shop Deleted Successfully");
                     fetchShops();
                 } catch (fallbackErr) {
                     console.error("Delete failed:", fallbackErr);
                     // Try one last desperate attempt: explicit delete-shop endpoint
                     try {
                         await axios.delete(`${API_BASE_URL}/delete-shop/${id}`);
-                        alert("Shop Deleted Successfully");
+                        toast.success("Shop Deleted Successfully");
                         fetchShops();
                     } catch (lastErr) {
-                        alert(`Failed to delete shop. Server responded with: ${lastErr.message}`);
+                        toast.error(`Failed to delete shop. Server responded with: ${lastErr.message}`);
                     }
                 }
             }
@@ -114,52 +118,58 @@ const Shops = () => {
 
     // DataGrid Columns
     const shopColumns = [
-        { header: 'ID', field: 'shop_id' },
-        { header: 'Shop Name', field: 'shop_name', render: row => <strong>{row.shop_name}</strong> },
-        { header: 'Address', field: 'shop_address' },
+        { header: 'ID', field: 'shopId' },
+        { header: 'Shop Name', field: 'shopName', render: row => <strong>{row.shopName || row.shop_name}</strong> },
+        { header: 'Address', field: 'shopAddress' },
         {
-            header: 'Current Debt', field: 'total_debt', render: row => (
-                <span className={`status-pill ${row.total_debt > 0 ? 'status-danger' : 'status-success'}`}>
-                    Rs. {row.total_debt}
+            header: 'Current Debt', field: 'totalDebt', render: row => {
+                const debt = row.totalDebt !== undefined ? row.totalDebt : row.total_debt;
+                return (
+                <span className={`status-pill ${debt > 0 ? 'status-danger' : 'status-success'}`}>
+                    Rs. {debt}
                 </span>
-            )
+                );
+            }
         }
     ];
 
-    const shopActions = (row) => (
-        <div style={{ display: 'flex', gap: '8px' }}>
-            <button onClick={() => navigate(`/shops/${row.shop_id}`)} className="btn btn-secondary" style={{ padding: '4px 12px', fontSize: '0.8rem' }}>
+    const shopActions = (row) => {
+        const id = row.shopId || row.shop_id;
+        return (
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+            <button onClick={() => navigate(`/shops/${id}`)} className="btn-gradient-primary" style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '50px' }}>
                 View Ledger
             </button>
-            <button onClick={() => handleDeleteShop(row.shop_id)} className="btn btn-danger" style={{ padding: '4px 12px', fontSize: '0.8rem' }}>
+            <button onClick={() => handleDeleteShop(id)} style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '50px', background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: 'white', border: 'none', cursor: 'pointer', boxShadow: '0 4px 10px rgba(220, 38, 38, 0.3)' }}>
                 Delete
             </button>
         </div>
-    );
+        );
+    };
 
     return (
-        <div className="animate-fade-in dashboard-container">
-            <h1 className="page-title">Shop Management</h1>
+        <div className="animate-fade-in dashboard-container" style={{ padding: '30px', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+            <h1 className="gradient-title"> Shop Management</h1>
 
             {/* ADD SHOP FORM */}
-            <div className="card dashboard-card">
-                <h3>Add New Shop</h3>
+            <div className="glass-form-card">
+                <h3 style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px', fontSize: '1.25rem', fontWeight: '700', color: '#1e293b' }}> Add New Shop</h3>
                 <form onSubmit={handleAddShop} className="dashboard-form">
-                    <div className="form-row">
+                    <div className="form-row" style={{ display: 'flex', gap: '15px' }}>
                         <div className="form-group" style={{ flex: 1 }}>
-                            <label className="form-label">Shop Name</label>
+                            <label className="form-label" style={{fontWeight: '600', color: '#64748b'}}>Shop Name</label>
                             <input
                                 type="text" placeholder="Enter Shop Name" required
-                                className="form-input"
+                                className="form-input-modern"
                                 value={newShop.shop_name}
                                 onChange={(e) => setNewShop({ ...newShop, shop_name: e.target.value })}
                             />
                         </div>
                         <div className="form-group" style={{ flex: 1 }}>
-                            <label className="form-label">Location / Address</label>
+                            <label className="form-label" style={{fontWeight: '600', color: '#64748b'}}>Location / Address</label>
                             <input
                                 type="text" placeholder="Enter Address" required
-                                className="form-input"
+                                className="form-input-modern"
                                 value={newShop.shop_address}
                                 onChange={(e) => setNewShop({ ...newShop, shop_address: e.target.value })}
                             />
@@ -182,21 +192,21 @@ const Shops = () => {
                         </div>
 
                         {createAccount && (
-                            <div className="form-row animate-fade-in">
+                            <div className="form-row animate-fade-in" style={{ display: 'flex', gap: '15px' }}>
                                 <div className="form-group" style={{ flex: 1 }}>
-                                    <label className="form-label">Username</label>
+                                    <label className="form-label" style={{fontWeight: '600', color: '#64748b'}}>Username</label>
                                     <input
                                         type="text" placeholder="e.g. shop_ali" required={createAccount}
-                                        className="form-input"
+                                        className="form-input-modern"
                                         value={shopkeeperData.username}
                                         onChange={(e) => setShopkeeperData({ ...shopkeeperData, username: e.target.value })}
                                     />
                                 </div>
                                 <div className="form-group" style={{ flex: 1 }}>
-                                    <label className="form-label">Password</label>
+                                    <label className="form-label" style={{fontWeight: '600', color: '#64748b'}}>Password</label>
                                     <input
                                         type="password" placeholder="******" required={createAccount}
-                                        className="form-input"
+                                        className="form-input-modern"
                                         value={shopkeeperData.password}
                                         onChange={(e) => setShopkeeperData({ ...shopkeeperData, password: e.target.value })}
                                     />
@@ -205,8 +215,8 @@ const Shops = () => {
                         )}
                     </div>
 
-                    <div className="form-actions">
-                        <button type="submit" className="btn btn-primary">
+                    <div className="form-actions" style={{marginTop: '20px'}}>
+                        <button type="submit" className="btn-gradient-success">
                             Add Shop {createAccount ? '& Create Account' : ''}
                         </button>
                     </div>
@@ -214,15 +224,17 @@ const Shops = () => {
             </div>
 
             {/* SHOPS LIST */}
-            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)' }}>
-                    <h3 style={{ margin: 0 }}>Registered Shops</h3>
+            <div className="chart-card" style={{ marginTop: '24px' }}>
+                <div style={{ paddingBottom: '15px', marginBottom: '15px', borderBottom: '1px solid #e2e8f0' }}>
+                    <h3 className="chart-title" style={{ margin: 0 }}> Registered Shops</h3>
                 </div>
-                <DataGrid
-                    columns={shopColumns}
-                    data={shops}
-                    actions={shopActions}
-                />
+                <div className="table-responsive">
+                    <DataGrid
+                        columns={shopColumns}
+                        data={shops}
+                        actions={shopActions}
+                    />
+                </div>
             </div>
         </div>
     );

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import API_BASE_URL from '../config';
 import DataGrid from '../components/DataGrid';
+import Swal from 'sweetalert2';
+import toast from 'react-hot-toast';
 
 const Users = () => {
     const [users, setUsers] = useState([]);
@@ -54,23 +56,25 @@ const Users = () => {
             };
 
             await axios.post(`${API_BASE_URL}/register`, payload); // Assuming /register or /add-user
-            alert("User Created Successfully!");
+            toast.success("User Created Successfully!");
             setFormData({ username: '', password: '', role: 'staff', shop_id: '' });
             fetchUsers();
         } catch (err) {
             console.error(err);
-            alert("Error creating user. Check console.");
+            toast.error("Error creating user. Check console.");
         }
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm("Are you sure you want to delete this user?")) {
+        const result = await Swal.fire({title: 'Are you sure?', text: "Are you sure you want to delete this user?", icon: 'warning', showCancelButton: true, background: 'rgba(255,255,255,0.9)', backdrop: 'rgba(0,0,0,0.4)', customClass: { popup: 'glass-form-card', title: 'gradient-title', confirmButton: 'btn-gradient-success', cancelButton: 'btn-gradient-danger' }, confirmButtonText: 'Yes, proceed!'});
+        if (result.isConfirmed) {
+
             try {
                 await axios.delete(`${API_BASE_URL}/users/${id}`);
                 fetchUsers();
             } catch (err) {
                 console.error(err);
-                alert("Error deleting user");
+                toast.error("Error deleting user");
             }
         }
     };
@@ -98,32 +102,34 @@ const Users = () => {
     ];
 
     const actions = (row) => (
-        <button onClick={() => handleDelete(row.id)} className="btn btn-danger" style={{ padding: '6px 12px' }}>Delete</button>
+        <button onClick={() => handleDelete(row.id)} style={{ padding: '6px 12px', borderRadius: '50px', background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: 'white', border: 'none', cursor: 'pointer', boxShadow: '0 4px 10px rgba(220,38,38,0.3)' }}>️ Delete</button>
     );
 
     return (
-        <div className="animate-fade-in dashboard-container">
-            <h1 className="page-title">User Management</h1>
+        <div className="animate-fade-in dashboard-container page-content" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+            <h1 className="gradient-title"> User Management</h1>
 
-            <div className="dashboard-analytics-grid">
+            <div className="dashboard-analytics-grid" style={{ gridTemplateColumns: '1fr' }}>
                 {/* User List */}
-                <div className="card dashboard-card">
-                    <h3>All Users</h3>
-                    <DataGrid
-                        columns={columns}
-                        data={users}
-                        actions={actions}
-                    />
+                <div className="chart-card">
+                    <h3 className="chart-title" style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px' }}> All Users</h3>
+                    <div className="dash-table-wrapper">
+                        <DataGrid
+                            columns={columns}
+                            data={users}
+                            actions={actions}
+                        />
+                    </div>
                 </div>
 
                 {/* Add User Form */}
-                <div className="card dashboard-card">
-                    <h3>Create New User</h3>
+                <div className="glass-form-card">
+                    <h3 style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px', fontSize: '1.25rem', fontWeight: '700', color: '#1e293b' }}> Create New User</h3>
                     <form onSubmit={handleSubmit} className="dashboard-form">
                         <div className="form-group" style={{ marginBottom: '20px' }}>
-                            <label className="form-label">Username</label>
+                            <label className="form-label" style={{fontWeight: '600', color: '#64748b'}}>Username</label>
                             <input
-                                className="form-input"
+                                className="form-input-modern"
                                 type="text"
                                 value={formData.username}
                                 onChange={e => setFormData({ ...formData, username: e.target.value })}
@@ -131,9 +137,9 @@ const Users = () => {
                             />
                         </div>
                         <div className="form-group" style={{ marginBottom: '20px' }}>
-                            <label className="form-label">Password</label>
+                            <label className="form-label" style={{fontWeight: '600', color: '#64748b'}}>Password</label>
                             <input
-                                className="form-input"
+                                className="form-input-modern"
                                 type="password"
                                 value={formData.password}
                                 onChange={e => setFormData({ ...formData, password: e.target.value })}
@@ -141,9 +147,9 @@ const Users = () => {
                             />
                         </div>
                         <div className="form-group" style={{ marginBottom: '20px' }}>
-                            <label className="form-label">Role</label>
+                            <label className="form-label" style={{fontWeight: '600', color: '#64748b'}}>Role</label>
                             <select
-                                className="form-input"
+                                className="form-input-modern"
                                 value={formData.role}
                                 onChange={e => setFormData({ ...formData, role: e.target.value })}
                             >
@@ -156,9 +162,9 @@ const Users = () => {
                         {/* Shop Selection (Conditional) */}
                         {formData.role === 'shopkeeper' && (
                             <div className="form-group animate-fade-in" style={{ marginBottom: '20px' }}>
-                                <label className="form-label">Assign Shop</label>
+                                <label className="form-label" style={{fontWeight: '600', color: '#64748b'}}>Assign Shop</label>
                                 <select
-                                    className="form-input"
+                                    className="form-input-modern"
                                     value={formData.shop_id}
                                     onChange={e => setFormData({ ...formData, shop_id: e.target.value })}
                                     required
@@ -173,8 +179,8 @@ const Users = () => {
                             </div>
                         )}
 
-                        <div className="form-actions">
-                            <button type="submit" className="btn btn-primary full-width">Create Account</button>
+                        <div className="form-actions" style={{ marginTop: '30px' }}>
+                            <button type="submit" className="btn-gradient-success full-width"> Create Account</button>
                         </div>
                     </form>
                 </div>

@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import API_BASE_URL from '../config';
 import DataGrid from '../components/DataGrid';
+import { FaBoxOpen } from 'react-icons/fa';
+import Swal from 'sweetalert2';
+import toast from 'react-hot-toast';
 
 const OrderBooking = () => {
     const [shops, setShops] = useState([]);
@@ -39,20 +42,20 @@ const OrderBooking = () => {
     // Add to Cart Logic
     const addToCart = () => {
         if (!currentProduct || quantity <= 0) {
-            alert("Please select a product and valid quantity");
+            toast("Please select a product and valid quantity");
             return;
         }
 
         const productDetails = products.find(p => p.id === parseInt(currentProduct));
 
         if (productDetails.stock < quantity) {
-            alert(`Insufficient Stock! Available: ${productDetails.stock}`);
+            toast.error(`Insufficient Stock! Available: ${productDetails.stock}`);
             return;
         }
 
         const newItem = {
             product_id: productDetails.id,
-            item_name: productDetails.item_name,
+            item_name: productDetails.itemName || productDetails.item_name,
             price: productDetails.price,
             quantity: parseInt(quantity),
             total: productDetails.price * parseInt(quantity)
@@ -82,7 +85,7 @@ const OrderBooking = () => {
     // Submit Order
     const submitOrder = async () => {
         if (!selectedShop || cart.length === 0) {
-            alert("Select a shop and add items to cart!");
+            toast("Select a shop and add items to cart!");
             return;
         }
 
@@ -98,7 +101,7 @@ const OrderBooking = () => {
 
         try {
             await axios.post(`${API_BASE_URL}/book-order`, payload);
-            alert("Order Booked Successfully!");
+            toast.success("Order Booked Successfully!");
             setCart([]);
             if (role !== 'shopkeeper') {
                 setSelectedShop('');
@@ -109,7 +112,7 @@ const OrderBooking = () => {
         } catch (err) {
             console.error(err);
             const errorDetails = err.response?.data ? JSON.stringify(err.response.data) : err.message;
-            alert(`Error booking order:\n${errorDetails}`);
+            toast.error(`Error booking order:\n${errorDetails}`);
         }
     };
 
@@ -130,12 +133,12 @@ const OrderBooking = () => {
 
     // --- Shopkeeper Visual Catalog Logic ---
     const addToCartDirect = (product, qty = 1) => {
-        if (qty <= 0) return alert("Invalid quantity");
-        if (product.stock < qty) return alert(`Insufficient Stock! Available: ${product.stock}`);
+        if (qty <= 0) return toast.error("Invalid quantity");
+        if (product.stock < qty) return toast.error(`Insufficient Stock! Available: ${product.stock}`);
 
         const newItem = {
             product_id: product.id,
-            item_name: product.item_name,
+            item_name: product.itemName || product.item_name,
             price: product.price,
             quantity: parseInt(qty),
             total: product.price * parseInt(qty)
@@ -151,12 +154,12 @@ const OrderBooking = () => {
         } else {
             setCart([...cart, newItem]);
         }
-        alert("Added to Cart!");
+        toast.success("Added to Cart!");
     };
 
     return (
-        <div className="animate-fade-in dashboard-container">
-            <h1 className="page-title">{role === 'shopkeeper' ? 'Browse Products' : 'Book New Order'}</h1>
+        <div className="animate-fade-in dashboard-container page-content" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+            <h1 className="gradient-title"> {role === 'shopkeeper' ? 'Browse Products' : 'Book New Order'}</h1>
 
             {/* SHOPKEEPER VISUAL VIEW */}
             {role === 'shopkeeper' ? (
@@ -167,10 +170,10 @@ const OrderBooking = () => {
                         {products.map(product => (
                             <div key={product.id} className="card product-card">
                                 <div className="product-icon">
-                                    <i className="fas fa-box-open" style={{ fontSize: '2rem', color: 'var(--emerald-500)' }}></i>
+                                    <FaBoxOpen style={{ fontSize: '2rem', color: 'var(--emerald-500)' }} />
                                 </div>
-                                <h4>{product.brand}</h4>
-                                <h3>{product.item_name}</h3>
+                                <h4>{product.brandName || product.brand}</h4>
+                                <h3>{product.itemName || product.item_name}</h3>
                                 <div className="price-tag">Rs. {product.price}</div>
                                 <div className={`stock-badge ${product.stock < 10 ? 'low' : ''}`}>
                                     {product.stock} in stock
@@ -182,12 +185,12 @@ const OrderBooking = () => {
                                         max={product.stock}
                                         value={qtys[product.id] ?? 1}
                                         onChange={(e) => setQtys({ ...qtys, [product.id]: e.target.value })}
-                                        className="form-input"
+                                        className="form-input-modern"
                                         style={{ width: '70px', padding: '8px' }}
                                         disabled={product.stock === 0}
                                     />
                                     <button
-                                        className="btn btn-primary full-width"
+                                        className="btn-gradient-primary full-width"
                                         onClick={() => {
                                             const qty = parseInt(qtys[product.id] ?? 1) || 1;
                                             addToCartDirect(product, qty);
@@ -195,6 +198,7 @@ const OrderBooking = () => {
                                             setQtys({ ...qtys, [product.id]: 1 });
                                         }}
                                         disabled={product.stock === 0}
+                                        style={{ opacity: product.stock === 0 ? 0.5 : 1 }}
                                     >
                                         Add to Order
                                     </button>
@@ -204,20 +208,22 @@ const OrderBooking = () => {
                     </div>
 
                     {/* Floating Cart / Summary */}
-                    <div className="card dashboard-card">
-                        <div className="card-header-flex">
-                            <h3>Your Cart ({cart.length} items)</h3>
-                            <h3>Total: Rs. {grandTotal}</h3>
+                    <div className="glass-form-card">
+                        <div className="card-header-flex" style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px' }}>
+                            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', color: '#1e293b' }}>️ Your Cart ({cart.length} items)</h3>
+                            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '700', color: '#1e293b' }}>Total: Rs. {grandTotal}</h3>
                         </div>
                         {cart.length > 0 ? (
                             <>
-                                <DataGrid
-                                    columns={cartColumns}
-                                    data={cart}
-                                    actions={cartActions}
-                                />
-                                <button onClick={submitOrder} className="btn btn-primary full-width" style={{ marginTop: '15px' }}>
-                                    Place Order
+                                <div className="dash-table-wrapper">
+                                    <DataGrid
+                                        columns={cartColumns}
+                                        data={cart}
+                                        actions={cartActions}
+                                    />
+                                </div>
+                                <button onClick={submitOrder} className="btn-gradient-success full-width" style={{ marginTop: '15px' }}>
+                                     Place Order
                                 </button>
                             </>
                         ) : (
@@ -227,62 +233,70 @@ const OrderBooking = () => {
                 </div>
             ) : (
                 /* STAFF / ADMIN TRADITIONAL VIEW */
-                <div className="form-row">
+                <div className="form-row" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
                     {/* LEFT PANEL: SELECTION */}
-                    <div className="card dashboard-card" style={{ flex: 1 }}>
-                        <h3>1. Select Shop</h3>
+                    <div className="glass-form-card" style={{ flex: 1 }}>
+                        <h3 style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '10px', marginBottom: '15px' }}>1. Select Shop</h3>
                         <div className="form-group">
-                            <label className="form-label">Shop From List</label>
+                            <label className="form-label" style={{fontWeight: '600', color: '#64748b'}}>Shop From List</label>
                             <select
                                 value={role === 'shopkeeper' ? userShopId : selectedShop}
                                 onChange={(e) => setSelectedShop(e.target.value)}
-                                className="form-input"
+                                className="form-input-modern"
                                 disabled={role === 'shopkeeper'}
                             >
                                 <option value="">-- Choose Shop --</option>
-                                {shops.map(s => <option key={s.shop_id} value={s.shop_id}>{s.shop_name} ({s.shop_address})</option>)}
+                                {shops.map(s => {
+                                    const sId = s.shopId || s.shop_id;
+                                    const sName = s.shopName || s.shop_name;
+                                    const sAddress = s.shopAddress || s.shop_address;
+                                    return <option key={sId} value={sId}>{sName} ({sAddress})</option>;
+                                })}
                             </select>
                         </div>
 
-                        <h3>2. Add Products</h3>
+                        <h3 style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '10px', marginBottom: '15px', marginTop: '25px' }}>2. Add Products</h3>
                         <div className="form-group">
-                            <label className="form-label">Select Product</label>
+                            <label className="form-label" style={{fontWeight: '600', color: '#64748b'}}>Select Product</label>
                             <select
                                 value={currentProduct}
                                 onChange={(e) => setCurrentProduct(e.target.value)}
-                                className="form-input"
+                                className="form-input-modern"
                             >
                                 <option value="">-- Choose Product --</option>
-                                {products.map(p => <option key={p.id} value={p.id}>{p.item_name} - Rs.{p.price} (Stock: {p.stock})</option>)}
+                                {products.map(p => {
+                                    const pName = p.itemName || p.item_name;
+                                    return <option key={p.id} value={p.id}>{pName} - Rs.{p.price} (Stock: {p.stock})</option>;
+                                })}
                             </select>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
-                            <div className="form-group" style={{ width: '100px', marginBottom: 0 }}>
-                                <label className="form-label">Quantity</label>
+                        <div style={{ display: 'flex', gap: '15px', alignItems: 'flex-end', marginTop: '20px' }}>
+                            <div className="form-group" style={{ width: '120px', marginBottom: 0 }}>
+                                <label className="form-label" style={{fontWeight: '600', color: '#64748b'}}>Quantity</label>
                                 <input
                                     type="number" min="1" value={quantity}
                                     onChange={(e) => setQuantity(e.target.value)}
-                                    className="form-input"
+                                    className="form-input-modern"
                                 />
                             </div>
                             <button
                                 onClick={addToCart}
-                                className="btn btn-primary"
-                                style={{ flex: 1, height: '42px' }}
+                                className="btn-gradient-primary"
+                                style={{ flex: 1, height: '44px', borderRadius: '10px' }}
                             >
-                                Add to Cart
+                                 Add to Cart
                             </button>
                         </div>
                     </div>
 
                     {/* RIGHT PANEL: CART */}
-                    <div className="card dashboard-card" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                        <h3>Order Summary</h3>
-                        {selectedShop && <p style={{ color: 'var(--text-secondary)', marginBottom: '15px' }}><strong>Shop:</strong> {shops.find(s => s.shop_id === Number(selectedShop))?.shop_name}</p>}
+                    <div className="glass-form-card" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        <h3 style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '10px', marginBottom: '15px' }}>️ Order Summary</h3>
+                        {selectedShop && <p style={{ color: 'var(--text-secondary)', marginBottom: '15px' }}><strong>Shop:</strong> {shops.find(s => (s.shopId || s.shop_id) === Number(selectedShop))?.shopName || shops.find(s => (s.shopId || s.shop_id) === Number(selectedShop))?.shop_name}</p>}
 
-                        <div style={{ flex: 1, marginBottom: '20px' }}>
+                        <div style={{ flex: 1, marginBottom: '20px' }} className="dash-table-wrapper">
                             <DataGrid
                                 columns={cartColumns}
                                 data={cart}
@@ -290,15 +304,15 @@ const OrderBooking = () => {
                             />
                         </div>
 
-                        <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '20px', textAlign: 'right' }}>
-                            <h2 style={{ color: 'var(--primary-900)' }}>Grand Total: Rs. {grandTotal}</h2>
+                        <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '20px', textAlign: 'right' }}>
+                            <h2 style={{ color: '#1e293b', marginBottom: '15px' }}>Grand Total: <span style={{ color: '#3b82f6' }}>Rs. {grandTotal}</span></h2>
                             <button
                                 onClick={submitOrder}
                                 disabled={cart.length === 0}
-                                className={`btn ${cart.length > 0 ? 'btn-primary' : 'btn-secondary'}`}
-                                style={{ width: '100%', padding: '12px' }}
+                                className={cart.length > 0 ? 'btn-gradient-success' : 'btn-gradient-primary'}
+                                style={{ width: '100%', padding: '12px', fontSize: '1.1rem', opacity: cart.length === 0 ? 0.5 : 1, background: cart.length === 0 ? '#94a3b8' : undefined }}
                             >
-                                Confirm Order
+                                 Confirm Order
                             </button>
                         </div>
                     </div>

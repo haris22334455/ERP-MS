@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import API_BASE_URL from '../config';
 import DataGrid from '../components/DataGrid';
+import Swal from 'sweetalert2';
+import toast from 'react-hot-toast';
 
 const Orders = () => {
     const [orders, setOrders] = useState([]);
@@ -20,45 +22,47 @@ const Orders = () => {
     }, []);
 
     const handleDeliver = async (orderId) => {
-        if (window.confirm("Confirm Delivery? Accessor will be updated.")) {
+        const result = await Swal.fire({title: 'Are you sure?', text: "Confirm Delivery? Accessor will be updated.", icon: 'warning', showCancelButton: true, background: 'rgba(255,255,255,0.9)', backdrop: 'rgba(0,0,0,0.4)', customClass: { popup: 'glass-form-card', title: 'gradient-title', confirmButton: 'btn-gradient-success', cancelButton: 'btn-gradient-danger' }, confirmButtonText: 'Yes, proceed!'});
+        if (result.isConfirmed) {
+
             try {
                 await axios.put(`${API_BASE_URL}/deliver-order/${orderId}`);
-                alert("Order Delivered & Ledger Updated!");
+                toast.success("Order Delivered & Ledger Updated!");
                 fetchOrders(); // Refresh list
             } catch (err) {
-                alert("Error updating order");
+                toast.error("Error updating order");
             }
         }
     };
 
     // DataGrid Config
     const orderColumns = [
-        { header: 'Order ID', field: 'order_id', render: row => `#${row.order_id}` },
-        { header: 'Shop ID', field: 'shop_id', render: row => `Shop #${row.shop_id}` },
-        { header: 'Amount', field: 'total_amount', render: row => <strong>Rs. {row.total_amount}</strong> },
+        { header: 'Order ID', field: 'orderId', render: row => `#${row.orderId}` },
+        { header: 'Shop ID', field: 'shopId', render: row => `Shop #${row.shopId}` },
+        { header: 'Amount', field: 'totalAmount', render: row => <strong>Rs. {row.totalAmount}</strong> },
         {
             header: 'Status', field: 'status', render: row => (
-                <span className={`status-pill ${row.status === 'Pending' ? 'status-warning' : 'status-success'}`}>
+                <span className={`status-pill ${row.status && row.status.toLowerCase() === 'pending' ? 'status-warning' : 'status-success'}`}>
                     {row.status}
                 </span>
             )
         },
-        { header: 'Date', field: 'order_date', render: row => new Date(row.order_date).toLocaleDateString() }
+        { header: 'Date', field: 'orderDate', render: row => new Date(row.orderDate).toLocaleDateString() }
     ];
 
     const orderActions = (row) => (
-        <button onClick={() => handleDeliver(row.order_id)} className="btn btn-success" style={{ padding: '4px 12px', fontSize: '0.8rem' }}>
-            Mark as Delivered
+        <button onClick={() => handleDeliver(row.orderId)} className="btn-gradient-success" style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '50px' }}>
+             Mark as Delivered
         </button>
     );
 
     return (
-        <div className="animate-fade-in">
-            <h1>Pending Orders</h1>
+        <div className="animate-fade-in dashboard-container" style={{ padding: '30px', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+            <h1 className="gradient-title"> Pending Orders</h1>
 
-            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)' }}>
-                    <h3 style={{ margin: 0 }}>Orders Queue</h3>
+            <div className="chart-card" style={{ marginTop: '24px' }}>
+                <div style={{ paddingBottom: '15px', marginBottom: '15px', borderBottom: '1px solid #e2e8f0' }}>
+                    <h3 className="chart-title" style={{ margin: 0 }}>⏱️ Orders Queue</h3>
                 </div>
                 <DataGrid
                     columns={orderColumns}
