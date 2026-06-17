@@ -1,18 +1,32 @@
-# Node modules
+# ─── Node / Frontend ─────────────────────────────────────────────
 node_modules/
-ma-traders-frontend/node_modules/
+erp-frontend/node_modules/
+erp-frontend/build/
 
-# Environment files
+# ─── Environment files (NEVER commit these!) ──────────────────────
 .env
+.env.local
+.env.production.local
+.env.development.local
+erp-backend/.env
+erp-frontend/.env.local
+erp-frontend/.env.production.local
 
-# Build output
-ma-traders-frontend/build/
+# ─── Java / Maven Build ───────────────────────────────────────────
+erp-backend/target/
+*.class
+*.jar
+*.war
 
-# IDE files
+# ─── IDE / OS ─────────────────────────────────────────────────────
 .idea/
 .vscode/
+*.iml
 *.swp
-
-# OS files
 .DS_Store
 Thumbs.db
+
+# ─── Logs ─────────────────────────────────────────────────────────
+erp-backend/boot_log*.txt
+npm-debug.log*
+

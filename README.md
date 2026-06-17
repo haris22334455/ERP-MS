@@ -1,11 +1,11 @@
-# MA Traders - Enterprise Resource Planning (ERP) System
+# ERP-MS - Enterprise Resource Planning (ERP) System
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 ![React](https://img.shields.io/badge/Frontend-React.js-61DAFB?logo=react&logoColor=black)
 ![Spring Boot](https://img.shields.io/badge/Backend-Spring%20Boot-6DB33F?logo=springboot&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791?logo=postgresql&logoColor=white)
 
-MA Traders is a comprehensive, full-stack Enterprise Resource Planning (ERP) web application designed to streamline inventory management, order processing, and financial tracking for wholesale and retail trading businesses.
+ERP-MS is a comprehensive, full-stack Enterprise Resource Planning (ERP) web application designed to streamline inventory management, order processing, and financial tracking for wholesale and retail trading businesses.
 
 It features a state-of-the-art **Bento-Box UI** design with glassmorphism aesthetics, making it both highly functional and visually stunning across desktop and mobile devices.
 

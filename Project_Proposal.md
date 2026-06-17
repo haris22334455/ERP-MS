@@ -1,7 +1,7 @@
 # 📋 Project Proposal
 
 ## Enterprise Resource Planning – Management System (ERP-MS)
-### MA Traders – Wholesale Distribution Management
+### ERP-MS – Wholesale Distribution Management
 
 ---
 
@@ -14,15 +14,15 @@
 
 ## 1. Introduction
 
-MA Traders is a wholesale distribution business that supplies FMCG (Fast-Moving Consumer Goods) products to retail shops across the market. Currently, all business operations — including order booking, inventory tracking, financial ledgers, and expense management — are managed manually using paper-based registers and spreadsheets. This results in frequent errors, delayed reporting, and difficulty in tracking outstanding debts from shop owners.
+ERP-MS is a wholesale distribution business that supplies FMCG (Fast-Moving Consumer Goods) products to retail shops across the market. Currently, all business operations — including order booking, inventory tracking, financial ledgers, and expense management — are managed manually using paper-based registers and spreadsheets. This results in frequent errors, delayed reporting, and difficulty in tracking outstanding debts from shop owners.
 
-This project aims to develop a **web-based Enterprise Resource Planning (ERP) system** that digitizes and automates all core business operations of MA Traders, enabling real-time visibility into sales, inventory, finances, and staff performance.
+This project aims to develop a **web-based Enterprise Resource Planning (ERP) system** that digitizes and automates all core business operations of ERP-MS, enabling real-time visibility into sales, inventory, finances, and staff performance.
 
 ---
 
 ## 2. Problem Statement
 
-The current manual system at MA Traders faces the following critical challenges:
+The current manual system at ERP-MS faces the following critical challenges:
 
 - **Inventory Mismanagement:** No real-time tracking of stock levels, leading to over/under-stocking.
 - **Untracked Debts (Udhaar):** Shop owners take goods on credit, and manual ledger-keeping leads to disputes and lost revenue.
@@ -142,7 +142,7 @@ A full-stack web application with a **React.js frontend** and a **Spring Boot (J
 
 ## 7. Database Schema
 
-### 7.1 Products Table (`"MA Traders"`)
+### 7.1 Products Table (`"ERP-MS"`)
 | Column | Type | Description |
 |--------|------|-------------|
 | id | SERIAL (PK) | Auto-increment ID |
@@ -284,7 +284,7 @@ A full-stack web application with a **React.js frontend** and a **Spring Boot (J
 
 ## 12. Conclusion
 
-The MA Traders ERP-MS system will transform a manual, error-prone wholesale distribution business into a digitally-managed, efficient operation. By leveraging modern web technologies (React.js, Spring Boot, PostgreSQL), the system ensures scalability, security, and real-time business insights. The role-based access control ensures that each user sees only what they need, while the comprehensive reporting module gives the owner complete financial visibility.
+The ERP-MS ERP-MS system will transform a manual, error-prone wholesale distribution business into a digitally-managed, efficient operation. By leveraging modern web technologies (React.js, Spring Boot, PostgreSQL), the system ensures scalability, security, and real-time business insights. The role-based access control ensures that each user sees only what they need, while the comprehensive reporting module gives the owner complete financial visibility.
 
 ---
 
