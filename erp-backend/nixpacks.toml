@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["jdk21_headless", "maven"]
+
+[phases.build]
+cmds = ["mvn -DskipTests clean package -q"]
+
+[start]
+cmd = "java -jar target/erp-backend-1.0.0.jar"
