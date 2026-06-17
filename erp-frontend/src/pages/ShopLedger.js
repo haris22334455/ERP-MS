@@ -182,9 +182,8 @@ const ShopLedger = () => {
                     </table>
                 </div>
             </div>
-            )}
             </>
-            )}
+        )}
         </div>
     );
 };
