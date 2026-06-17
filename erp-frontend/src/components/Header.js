@@ -124,7 +124,7 @@ const Header = ({ toggleSidebar }) => {
 
 
             {/* Right Actions */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginLeft: 'auto' }}>
 
                 {/* Notifications */}
                 <div style={{ position: 'relative', cursor: 'pointer' }} ref={notifRef}>
@@ -142,7 +142,7 @@ const Header = ({ toggleSidebar }) => {
                     </div>
                     
                     {showNotifications && (
-                        <div className="header-dropdown">
+                        <div className="header-dropdown" style={{ right: 0, left: 'auto' }}>
                             <div className="dropdown-header">Notifications ({notifications.length})</div>
                             {notifications.length > 0 ? (
                                 notifications.map(notif => (
@@ -174,7 +174,7 @@ const Header = ({ toggleSidebar }) => {
                     </div>
 
                     {showProfileMenu && (
-                        <div className="header-dropdown">
+                        <div className="header-dropdown" style={{ right: 0, left: 'auto' }}>
                             <div className="dropdown-header">Logged in as {username}</div>
                             <div className="dropdown-item danger" onClick={handleLogout}>
                                 <FaSignOutAlt />
