@@ -535,3 +535,37 @@
   border-radius: 50%;
   pointer-events: none;
 }
+/* Mobile Responsiveness Enhancements */
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 10px !important;
+  }
+  .glass-form-card, .chart-card {
+    padding: 15px !important;
+    border-radius: 12px;
+    margin-bottom: 15px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .gradient-title {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+  }
+  .dash-table-wrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    width: 100% !important;
+  }
+  .dash-table {
+    min-width: 500px; /* Ensure table stays readable and scrolls */
+  }
+  .impact-card {
+    padding: 15px !important;
+  }
+  .form-input-modern {
+    box-sizing: border-box !important;
+  }
+  .btn-gradient-primary, .btn-gradient-success {
+    width: 100%;
+  }
+}
