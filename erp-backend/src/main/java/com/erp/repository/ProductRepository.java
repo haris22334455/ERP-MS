@@ -29,4 +29,7 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
     @Modifying
     @Query("UPDATE Product p SET p.stock = p.stock + :quantity WHERE p.id = :id")
     void restoreStock(@Param("id") Integer id, @Param("quantity") Integer quantity);
+
+    @Query("SELECT p FROM Product p WHERE p.stock <= p.minimumThreshold")
+    List<Product> findLowStockProducts();
 }

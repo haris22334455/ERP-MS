@@ -58,6 +58,15 @@ public class ProductController {
         return ResponseEntity.ok(productRepository.findAll(Sort.by(Sort.Direction.ASC, "id")));
     }
 
+    // GET /products/low-stock
+    @GetMapping("/products/low-stock")
+    public ResponseEntity<?> getLowStockProducts(@RequestAttribute("role") String role) {
+        if (role == null || role.isBlank()) {
+            return ResponseEntity.status(403).body("Access Denied");
+        }
+        return ResponseEntity.ok(productRepository.findLowStockProducts());
+    }
+
     // GET: Search feature (non-paginated — for order booking autocomplete)
     @GetMapping("/search")
     public ResponseEntity<?> searchProducts(
@@ -81,6 +90,9 @@ public class ProductController {
         product.setPrice(new java.math.BigDecimal(body.get("price").toString()));
         product.setStock(Integer.parseInt(body.get("stock").toString()));
         product.setCompanyName((String) body.getOrDefault("company_name", "MA Traders"));
+        if (body.containsKey("minimum_threshold")) {
+            product.setMinimumThreshold(Integer.parseInt(body.get("minimum_threshold").toString()));
+        }
         Product savedProduct = productRepository.save(product);
         return ResponseEntity.ok(savedProduct);
     }
@@ -106,6 +118,9 @@ public class ProductController {
         }
         if (body.containsKey("company_name")) {
             product.setCompanyName((String) body.get("company_name"));
+        }
+        if (body.containsKey("minimum_threshold")) {
+            product.setMinimumThreshold(Integer.parseInt(body.get("minimum_threshold").toString()));
         }
         productRepository.save(product);
         return ResponseEntity.ok("Product update ho gaya!");

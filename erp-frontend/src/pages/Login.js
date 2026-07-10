@@ -1,19 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import API_BASE_URL from '../config';
 import toast from 'react-hot-toast';
+import { decodeJwtRole } from '../utils/auth';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 const Login = () => {
-    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            const role = decodeJwtRole(token);
+            if (role === 'admin') navigate("/dashboard");
+            else if (role === 'staff') navigate("/order-booking");
+            else if (role === 'shopkeeper') navigate("/order-booking");
+        }
+    }, [navigate]);
 
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
             // Sending request to backend
-            const res = await axios.post(`${API_BASE_URL}/login`, { username, password });
+            const res = await axios.post(`${API_BASE_URL}/login`, { email, password });
 
             // ✅ SECURITY FIX: Only store the token in localStorage.
             // Role is no longer stored in localStorage — it is decoded directly
@@ -21,7 +34,8 @@ const Login = () => {
             // so users cannot tamper with it via DevTools.
             localStorage.setItem('token', res.data.token);
             localStorage.setItem('user_id', res.data.user.id);
-            localStorage.setItem('username', username);
+            localStorage.setItem('email', email);
+            localStorage.setItem('username', res.data.user.username);
             if (res.data.user.shop_id) {
                 localStorage.setItem('shop_id', res.data.user.shop_id);
             }
@@ -33,7 +47,7 @@ const Login = () => {
             if (role === 'admin') {
                 navigate("/dashboard");
             } else if (role === 'staff') {
-                navigate("/orders");
+                navigate("/order-booking");
             } else if (role === 'shopkeeper') {
                 navigate("/order-booking");
             } else {
@@ -54,28 +68,42 @@ const Login = () => {
                 <form onSubmit={handleLogin} className="login-form">
                     <div className="form-group">
                         <input
-                            type="text"
+                            type="email"
                             className="login-input-modern"
-                            placeholder="Username"
-                            onChange={(e) => setUsername(e.target.value)}
+                            placeholder="Email"
+                            onChange={(e) => setEmail(e.target.value)}
                             required
                         />
                     </div>
-                    <div className="form-group">
+                    <div className="form-group" style={{ position: 'relative' }}>
                         <input
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             className="login-input-modern"
                             placeholder="Password"
                             onChange={(e) => setPassword(e.target.value)}
+                            style={{ paddingRight: '40px' }}
                             required
                         />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            style={{ position: 'absolute', right: '15px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                        >
+                            {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+                        </button>
+                    </div>
+                    
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
+                        <a href="/forgot-password" onClick={(e) => { e.preventDefault(); navigate('/forgot-password'); }} style={{ color: '#3b82f6', fontSize: '0.9rem', textDecoration: 'none', fontWeight: '600' }}>
+                            Forgot Password?
+                        </a>
                     </div>
                     <button
                         type="submit"
                         className="btn-gradient-primary"
                         style={{ width: '100%', padding: '15px', fontSize: '1.1rem', marginTop: '10px' }}
                     >
-                         Login to Dashboard
+                         Sign In
                     </button>
                 </form>
             </div>

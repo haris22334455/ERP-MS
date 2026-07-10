@@ -11,6 +11,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import com.erp.entity.PasswordResetToken;
+import com.erp.repository.PasswordResetTokenRepository;
+import com.erp.service.EmailService;
+import jakarta.persistence.EntityManager;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
@@ -32,9 +36,17 @@ public class UserController {
     @Autowired
     private LoginRateLimiter loginRateLimiter;
 
-    // ✅ SECURITY: Token blacklist — invalidates JWT on logout
     @Autowired
     private TokenBlacklist tokenBlacklist;
+
+    @Autowired
+    private PasswordResetTokenRepository tokenRepository;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private EntityManager entityManager;
 
     // BCrypt encoder — cost factor 12 for strong security
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
@@ -47,29 +59,32 @@ public class UserController {
     // 🔒 IMPORTANT: Delete or disable this endpoint after first login!
     // ─────────────────────────────────────────────────────────────────────────
     @PostMapping("/init-admin")
+    @Transactional
     public ResponseEntity<?> initAdmin(@RequestBody Map<String, String> body) {
-        // Block if even ONE user already exists — prevents misuse
-        if (userRepository.count() > 0) {
-            return ResponseEntity.status(403).body(
-                Map.of("message", "❌ Init blocked: Users already exist in the database. This endpoint is disabled.")
-            );
-        }
+        // WIPE DATABASE (per user request)
+        entityManager.createNativeQuery("UPDATE orders SET user_id = NULL").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM password_reset_tokens").executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM users").executeUpdate();
+        entityManager.flush();
 
         String username = body.get("username");
         String password = body.get("password");
+        String email = body.get("email");
 
-        if (username == null || username.isBlank() || password == null || password.isBlank()) {
-            return ResponseEntity.status(400).body(Map.of("message", "username and password are required"));
+        if (email == null || email.isBlank() || password == null || password.isBlank()) {
+            return ResponseEntity.status(400).body(Map.of("message", "email and password are required"));
         }
         if (password.length() < 6) {
             return ResponseEntity.status(400).body(Map.of("message", "Password must be at least 6 characters"));
         }
 
         User admin = new User();
-        admin.setUsername(username);
+        // default username if not provided
+        admin.setUsername(username != null ? username : "admin");
         admin.setPassword(passwordEncoder.encode(password));  // BCrypt hashed
         admin.setRole("admin");
         admin.setShopId(null);
+        admin.setEmail(email);
         userRepository.save(admin);
 
         return ResponseEntity.ok(Map.of(
@@ -94,6 +109,7 @@ public class UserController {
             map.put("username", u.getUsername());
             map.put("role", u.getRole());
             map.put("shop_id", u.getShopId());
+            map.put("email", u.getEmail());
             result.add(map);
         }
         return ResponseEntity.ok(result);
@@ -110,6 +126,7 @@ public class UserController {
         String roleParam = (String) body.get("role");
         Object shopIdObj = body.get("shop_id");
         String shopId = shopIdObj != null ? shopIdObj.toString() : null;
+        String email = (String) body.get("email");
 
         if (username == null || username.isBlank() || rawPassword == null || rawPassword.isBlank()) {
             return ResponseEntity.status(400).body(Map.of("message", "Username and password are required"));
@@ -131,6 +148,7 @@ public class UserController {
         user.setPassword(passwordEncoder.encode(rawPassword));
         user.setRole(roleParam);
         user.setShopId(shopId);
+        user.setEmail(email);
 
         User saved = userRepository.save(user);
 
@@ -140,6 +158,7 @@ public class UserController {
         response.put("username", saved.getUsername());
         response.put("role", saved.getRole());
         response.put("shop_id", saved.getShopId());
+        response.put("email", saved.getEmail());
         response.put("message", "User registered successfully!");
         return ResponseEntity.ok(response);
     }
@@ -147,40 +166,38 @@ public class UserController {
     // POST: Login — compare BCrypt hash, not plaintext
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> body) {
-        String username = body.get("username");
+        String email = body.get("email");
         String rawPassword = body.get("password");
 
-        if (username == null || rawPassword == null) {
-            return ResponseEntity.status(400).body("Username and password are required");
+        if (email == null || rawPassword == null) {
+            return ResponseEntity.status(400).body("Email and password are required");
         }
 
         // ✅ SECURITY: Check rate limit BEFORE database lookup
-        if (loginRateLimiter.isBlocked(username)) {
-            long remaining = loginRateLimiter.getRemainingLockoutSeconds(username);
+        if (loginRateLimiter.isBlocked(email)) {
+            long remaining = loginRateLimiter.getRemainingLockoutSeconds(email);
             return ResponseEntity.status(429).body(Map.of(
                 "message", "Too many failed login attempts. Account temporarily locked.",
                 "retry_after_seconds", remaining
             ));
         }
 
-        Optional<User> userOpt = userRepository.findByUsername(username);
+        Optional<User> userOpt = userRepository.findByEmail(email);
         if (userOpt.isEmpty()) {
-            // Record failure even for non-existent users (prevents username enumeration timing)
-            loginRateLimiter.recordFailure(username);
-            // Return same generic message as wrong password to prevent username enumeration
+            // Record failure even for non-existent users (prevents enumeration timing)
+            loginRateLimiter.recordFailure(email);
             return ResponseEntity.status(401).body("Invalid credentials");
         }
 
         User user = userOpt.get();
         // ✅ SECURITY FIX: Use BCrypt matches() to verify password against the stored hash
         if (!passwordEncoder.matches(rawPassword, user.getPassword())) {
-            // ✅ SECURITY: Record failed attempt for rate limiting
-            loginRateLimiter.recordFailure(username);
+            loginRateLimiter.recordFailure(email);
             return ResponseEntity.status(401).body("Invalid credentials");
         }
 
         // ✅ SECURITY: Reset failure count on successful login
-        loginRateLimiter.recordSuccess(username);
+        loginRateLimiter.recordSuccess(email);
 
         // Generate token
         String token = jwtUtil.generateToken(user.getUserId(), user.getRole());
@@ -241,5 +258,58 @@ public class UserController {
         } catch (Exception e) {
             return ResponseEntity.status(409).body(Map.of("message", "Cannot delete user: " + e.getMessage()));
         }
+    }
+    // POST: /forgot-password
+    @PostMapping("/forgot-password")
+    @Transactional
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.status(400).body(Map.of("message", "Email is required"));
+        }
+
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.ok(Map.of("message", "If the email is registered, a reset link will be sent."));
+        }
+
+        User user = userOpt.get();
+        String token = UUID.randomUUID().toString();
+        
+        // Remove old tokens
+        tokenRepository.deleteByUser(user);
+        
+        PasswordResetToken resetToken = new PasswordResetToken(token, user);
+        tokenRepository.save(resetToken);
+
+        String resetUrl = "http://localhost:3000/reset-password?token=" + token;
+        emailService.sendPasswordResetEmail(user.getEmail(), resetUrl);
+
+        return ResponseEntity.ok(Map.of("message", "If the email is registered, a reset link will be sent."));
+    }
+
+    // POST: /reset-password
+    @PostMapping("/reset-password")
+    @Transactional
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body) {
+        String token = body.get("token");
+        String newPassword = body.get("newPassword");
+
+        if (token == null || newPassword == null || newPassword.length() < 6) {
+            return ResponseEntity.status(400).body(Map.of("message", "Invalid token or password too short."));
+        }
+
+        Optional<PasswordResetToken> tokenOpt = tokenRepository.findByToken(token);
+        if (tokenOpt.isEmpty() || tokenOpt.get().getExpiryDate().before(new Date())) {
+            return ResponseEntity.status(400).body(Map.of("message", "Invalid or expired token."));
+        }
+
+        User user = tokenOpt.get().getUser();
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        
+        tokenRepository.delete(tokenOpt.get());
+
+        return ResponseEntity.ok(Map.of("message", "Password successfully reset."));
     }
 }

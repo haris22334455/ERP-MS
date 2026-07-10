@@ -23,6 +23,9 @@ public class OrderItem {
     @Column(name = "price_at_sale")
     private BigDecimal priceAtSale;
 
+    @Column(name = "returned_quantity", nullable = false, columnDefinition = "int default 0")
+    private Integer returnedQuantity = 0;
+
     // Constructors
     public OrderItem() {}
 
@@ -41,4 +44,7 @@ public class OrderItem {
 
     public BigDecimal getPriceAtSale() { return priceAtSale; }
     public void setPriceAtSale(BigDecimal priceAtSale) { this.priceAtSale = priceAtSale; }
+
+    public Integer getReturnedQuantity() { return returnedQuantity; }
+    public void setReturnedQuantity(Integer returnedQuantity) { this.returnedQuantity = returnedQuantity; }
 }

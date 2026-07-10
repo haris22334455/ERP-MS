@@ -1,6 +1,7 @@
 package com.erp.controller;
 
 import com.erp.dto.BookOrderRequest;
+import com.erp.dto.ReturnOrderRequest;
 import com.erp.entity.*;
 import com.erp.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,6 +121,59 @@ public class OrderController {
         return ResponseEntity.ok(orderRepository.findByStatus("pending"));
     }
 
+    // GET: Get orders list, optionally filtered by status
+    @GetMapping("/orders")
+    public ResponseEntity<?> getOrders(
+            @RequestAttribute("role") String role,
+            @RequestParam(required = false) String status) {
+        if (!"admin".equalsIgnoreCase(role) && !"staff".equalsIgnoreCase(role) && !"shopkeeper".equalsIgnoreCase(role)) {
+            return ResponseEntity.status(403).body("Access Denied");
+        }
+        if (status == null || status.isBlank()) {
+            return ResponseEntity.ok(orderRepository.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "orderId")));
+        }
+        return ResponseEntity.ok(orderRepository.findByStatus(status));
+    }
+
+    // GET: Get all items inside an order with product names
+    @GetMapping("/order-items/{orderId}")
+    public ResponseEntity<?> getOrderItems(
+            @RequestAttribute("role") String role,
+            @PathVariable Integer orderId) {
+        if (role == null || role.isBlank()) {
+            return ResponseEntity.status(403).body("Access Denied");
+        }
+        
+        List<OrderItem> items = orderItemRepository.findByOrderId(orderId);
+        List<Map<String, Object>> result = new java.util.ArrayList<>();
+        
+        for (OrderItem item : items) {
+            Map<String, Object> map = new java.util.LinkedHashMap<>();
+            map.put("itemId", item.getItemId());
+            map.put("productId", item.getProductId());
+            map.put("quantity", item.getQuantity());
+            map.put("priceAtSale", item.getPriceAtSale());
+            map.put("returnedQuantity", item.getReturnedQuantity() != null ? item.getReturnedQuantity() : 0);
+            
+            if (item.getProductId() != null) {
+                Product p = productRepository.findById(item.getProductId()).orElse(null);
+                if (p != null) {
+                    map.put("itemName", p.getItemName());
+                    map.put("brandName", p.getBrandName());
+                } else {
+                    map.put("itemName", "Unknown Product");
+                    map.put("brandName", "N/A");
+                }
+            } else {
+                map.put("itemName", "Deleted Product");
+                map.put("brandName", "N/A");
+            }
+            result.add(map);
+        }
+        
+        return ResponseEntity.ok(result);
+    }
+
     // PUT: Order Cancel karna aur Stock Restore karna
     @PutMapping("/cancel-order/{order_id}")
     @Transactional
@@ -149,5 +203,110 @@ public class OrderController {
         }
 
         return ResponseEntity.ok("Order cancelled and stock restored!");
+    }
+
+    // POST: Return Items from a delivered order
+    @PostMapping("/return-order/{orderId}")
+    @Transactional
+    public ResponseEntity<?> returnOrder(
+            @RequestAttribute("role") String role,
+            @PathVariable Integer orderId,
+            @RequestBody ReturnOrderRequest request) {
+        // Only admin or staff can return orders
+        if (!"admin".equalsIgnoreCase(role) && !"staff".equalsIgnoreCase(role)) {
+            return ResponseEntity.status(403).body("Access Denied: Only Admin or Staff can process returns");
+        }
+
+        Order order = orderRepository.findById(orderId).orElse(null);
+        if (order == null) {
+            return ResponseEntity.status(404).body("Order not found");
+        }
+
+        // Only delivered or partially returned orders can have returns
+        if (!"delivered".equalsIgnoreCase(order.getStatus()) && !"partially returned".equalsIgnoreCase(order.getStatus())) {
+            return ResponseEntity.badRequest().body("Only delivered or partially returned orders can be returned!");
+        }
+
+        List<OrderItem> orderItems = orderItemRepository.findByOrderId(orderId);
+        BigDecimal totalRefund = BigDecimal.ZERO;
+
+        for (ReturnOrderRequest.ReturnItemRequest returnItem : request.getItems()) {
+            Integer prodId = returnItem.getProductId();
+            Integer retQty = returnItem.getQuantity();
+
+            if (retQty == null || retQty <= 0) {
+                continue;
+            }
+
+            // Find matching OrderItem
+            OrderItem matchedItem = null;
+            for (OrderItem oi : orderItems) {
+                if (oi.getProductId() != null && oi.getProductId().equals(prodId)) {
+                    matchedItem = oi;
+                    break;
+                }
+            }
+
+            if (matchedItem == null) {
+                return ResponseEntity.badRequest().body("Product ID " + prodId + " is not part of this order!");
+            }
+
+            int currentReturned = matchedItem.getReturnedQuantity() != null ? matchedItem.getReturnedQuantity() : 0;
+            if (currentReturned + retQty > matchedItem.getQuantity()) {
+                return ResponseEntity.badRequest().body("Return quantity " + retQty + " exceeds remaining returnable quantity for product ID " + prodId);
+            }
+
+            // 1. Update returned quantity on OrderItem
+            matchedItem.setReturnedQuantity(currentReturned + retQty);
+            orderItemRepository.save(matchedItem);
+
+            // 2. Restore stock for product
+            productRepository.restoreStock(prodId, retQty);
+
+            // 3. Accumulate refund amount
+            BigDecimal itemRefund = matchedItem.getPriceAtSale().multiply(new BigDecimal(retQty));
+            totalRefund = totalRefund.add(itemRefund);
+        }
+
+        if (totalRefund.compareTo(BigDecimal.ZERO) > 0) {
+            // 4. Determine new Order status
+            boolean allReturned = true;
+            for (OrderItem oi : orderItems) {
+                int returned = oi.getReturnedQuantity() != null ? oi.getReturnedQuantity() : 0;
+                if (returned < oi.getQuantity()) {
+                    allReturned = false;
+                    break;
+                }
+            }
+            order.setStatus(allReturned ? "returned" : "partially returned");
+            orderRepository.save(order);
+
+            // 5. Update Ledger with Credit
+            Integer shopId = order.getShopId();
+            List<Ledger> lastEntries = ledgerRepository.findLatestByShopId(shopId);
+            BigDecimal oldBalance = lastEntries.isEmpty() ? BigDecimal.ZERO : lastEntries.get(0).getBalance();
+            BigDecimal newBalance = oldBalance.subtract(totalRefund);
+
+            Ledger ledger = new Ledger();
+            ledger.setShopId(shopId);
+            ledger.setDescription("Returned Items (Order ID: " + orderId + ")");
+            ledger.setDebit(BigDecimal.ZERO);
+            ledger.setCredit(totalRefund);
+            ledger.setBalance(newBalance);
+            ledgerRepository.save(ledger);
+
+            // 6. Update Shop total debt
+            Shop shop = shopRepository.findById(shopId).orElseThrow();
+            shop.setTotalDebt(newBalance);
+            shopRepository.save(shop);
+        } else {
+            return ResponseEntity.badRequest().body("No valid items were returned!");
+        }
+
+        return ResponseEntity.ok(Map.of(
+            "message", "Return processed successfully",
+            "refundAmount", totalRefund,
+            "status", order.getStatus()
+        ));
     }
 }

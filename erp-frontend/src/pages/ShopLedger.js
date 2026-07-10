@@ -4,16 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import API_BASE_URL from '../config';
 import toast from 'react-hot-toast';
 
-// Decode role from JWT token (same approach as App.js & Sidebar.js)
-const decodeJwtRole = (token) => {
-    try {
-        const payload = token.split('.')[1];
-        const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
-        return decoded.role || null;
-    } catch {
-        return null;
-    }
-};
+import { decodeJwtRole } from '../utils/auth';
 
 const ShopLedger = () => {
     const { id } = useParams();
@@ -113,16 +104,18 @@ const ShopLedger = () => {
                     <h3 style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px', fontSize: '1.25rem', fontWeight: '700', color: '#1e293b' }}> Add New Entry</h3>
                     <form onSubmit={handleTransaction}>
                         <div className="form-row" style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                            <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
-                                <label className="form-label" style={{fontWeight: '600', color: '#64748b'}}>Transaction Type</label>
-                                <select
-                                    value={transaction.type}
-                                    onChange={(e) => setTransaction({ ...transaction, type: e.target.value })}
-                                    className="form-input-modern"
-                                >
-                                    <option value="credit"> Cash Received (Recovery)</option>
-                                    <option value="debit"> Goods Given on Credit</option>
-                                </select>
+                            <div className="form-group" style={{ flex: 1, minWidth: '300px' }}>
+                                <label className="form-label" style={{fontWeight: '600', color: '#64748b', marginBottom: '8px', display: 'block'}}>Transaction Type</label>
+                                <div style={{ display: 'flex', gap: '15px' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', color: '#059669', fontWeight: '600', background: transaction.type === 'credit' ? '#D1FAE5' : '#f1f5f9', padding: '8px 12px', borderRadius: '8px', transition: 'all 0.2s' }}>
+                                        <input type="radio" name="txType" value="credit" checked={transaction.type === 'credit'} onChange={(e) => setTransaction({ ...transaction, type: e.target.value })} style={{ accentColor: '#059669' }} />
+                                        Record Payment
+                                    </label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', color: '#dc2626', fontWeight: '600', background: transaction.type === 'debit' ? '#FEE2E2' : '#f1f5f9', padding: '8px 12px', borderRadius: '8px', transition: 'all 0.2s' }}>
+                                        <input type="radio" name="txType" value="debit" checked={transaction.type === 'debit'} onChange={(e) => setTransaction({ ...transaction, type: e.target.value })} style={{ accentColor: '#dc2626' }} />
+                                        Record Credit Sale
+                                    </label>
+                                </div>
                             </div>
 
                             <div className="form-group" style={{ flex: 2, minWidth: '250px' }}>

@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 const Shops = () => {
     const [shops, setShops] = useState([]);
     const [createAccount, setCreateAccount] = useState(false);
-    const [shopkeeperData, setShopkeeperData] = useState({ username: '', password: '' });
+    const [shopkeeperData, setShopkeeperData] = useState({ username: '', password: '', email: '' });
     const [newShop, setNewShop] = useState({ shop_name: '', shop_address: '' });
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
@@ -71,6 +71,7 @@ const Shops = () => {
                         const registerPayload = {
                             username: shopkeeperData.username,
                             password: shopkeeperData.password,
+                            email: shopkeeperData.email,
                             role: 'shopkeeper',
                             shop_id: String(newShopId) // Ensure it's a string
                         };
@@ -88,7 +89,7 @@ const Shops = () => {
 
             // Reset Form
             setNewShop({ shop_name: '', shop_address: '' });
-            setShopkeeperData({ username: '', password: '' });
+            setShopkeeperData({ username: '', password: '', email: '' });
             setCreateAccount(false);
             fetchShops();
 
@@ -211,8 +212,8 @@ const Shops = () => {
                         </div>
 
                         {createAccount && (
-                            <div className="form-row animate-fade-in" style={{ display: 'flex', gap: '15px' }}>
-                                <div className="form-group" style={{ flex: 1 }}>
+                            <div className="form-row animate-fade-in" style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                                <div className="form-group" style={{ flex: 1, minWidth: '150px' }}>
                                     <label className="form-label" style={{fontWeight: '600', color: '#64748b'}}>Username</label>
                                     <input
                                         type="text" placeholder="e.g. shop_ali" required={createAccount}
@@ -221,7 +222,16 @@ const Shops = () => {
                                         onChange={(e) => setShopkeeperData({ ...shopkeeperData, username: e.target.value })}
                                     />
                                 </div>
-                                <div className="form-group" style={{ flex: 1 }}>
+                                <div className="form-group" style={{ flex: 1, minWidth: '150px' }}>
+                                    <label className="form-label" style={{fontWeight: '600', color: '#64748b'}}>Email</label>
+                                    <input
+                                        type="email" placeholder="shop@email.com" required={createAccount}
+                                        className="form-input-modern"
+                                        value={shopkeeperData.email}
+                                        onChange={(e) => setShopkeeperData({ ...shopkeeperData, email: e.target.value })}
+                                    />
+                                </div>
+                                <div className="form-group" style={{ flex: 1, minWidth: '150px' }}>
                                     <label className="form-label" style={{fontWeight: '600', color: '#64748b'}}>Password</label>
                                     <input
                                         type="password" placeholder="******" required={createAccount}

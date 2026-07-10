@@ -5,16 +5,7 @@ import axios from 'axios';
 import API_BASE_URL from '../config';
 import Swal from 'sweetalert2';
 
-// Decode role from JWT token
-const decodeJwtRole = (token) => {
-    try {
-        const payload = token.split('.')[1];
-        const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
-        return decoded.role || null;
-    } catch {
-        return null;
-    }
-};
+import { decodeJwtRole } from '../utils/auth';
 
 const Header = ({ toggleSidebar }) => {
     const [showProfileMenu, setShowProfileMenu] = useState(false);

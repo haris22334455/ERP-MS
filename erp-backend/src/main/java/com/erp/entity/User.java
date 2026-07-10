@@ -21,6 +21,9 @@ public class User {
     @Column(name = "shop_id")
     private String shopId;
 
+    @Column(unique = true)
+    private String email;
+
     // Constructors
     public User() {}
 
@@ -39,4 +42,7 @@ public class User {
 
     public String getShopId() { return shopId; }
     public void setShopId(String shopId) { this.shopId = shopId; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 }

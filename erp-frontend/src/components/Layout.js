@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import BackButton from './BackButton';
 
 const Layout = () => {
     // Default to collapsed on mobile (width < 768px), expanded on desktop
@@ -40,7 +41,8 @@ const Layout = () => {
             {/* Main Content Wrapper */}
             <div className={`main-wrapper ${isCollapsed ? 'collapsed' : 'expanded'}`}>
                 <Header toggleSidebar={toggleCollapse} />
-                <div className="page-content">
+                <div className="page-content" style={{ padding: '24px' }}>
+                    <BackButton />
                     <Outlet />
                 </div>
             </div>

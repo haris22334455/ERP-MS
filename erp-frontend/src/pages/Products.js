@@ -33,7 +33,8 @@ const Products = () => {
         item_name: '',
         price: '',
         stock: '',
-        company_name: ''
+        company_name: '',
+        minimum_threshold: ''
     });
 
     // Edit state
@@ -43,7 +44,8 @@ const Products = () => {
         item_name: '',
         price: '',
         stock: '',
-        company_name: ''
+        company_name: '',
+        minimum_threshold: ''
     });
 
     // ✅ PAGINATED Fetch
@@ -103,10 +105,14 @@ const Products = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            await axios.post(`${API_BASE_URL}/add-product`, formData, {
+            const dataToSend = {
+                ...formData,
+                minimum_threshold: formData.minimum_threshold !== '' ? Number(formData.minimum_threshold) : 10
+            };
+            await axios.post(`${API_BASE_URL}/add-product`, dataToSend, {
                 headers: { Authorization: token }
             });
-            setFormData({ brand: '', item_name: '', price: '', stock: '', company_name: '' });
+            setFormData({ brand: '', item_name: '', price: '', stock: '', company_name: '', minimum_threshold: '' });
             setShowAddForm(false);
             setCurrentPage(0);
             fetchProducts(0, searchTerm);
@@ -125,21 +131,26 @@ const Products = () => {
             item_name: product.itemName || '',
             price: product.price,
             stock: product.stock,
-            company_name: product.companyName || ''
+            company_name: product.companyName || '',
+            minimum_threshold: product.minimumThreshold !== undefined ? product.minimumThreshold : 10
         });
     };
 
     // Cancel Editing
     const handleCancelEdit = () => {
         setEditingId(null);
-        setEditFormData({ brand: '', item_name: '', price: '', stock: '', company_name: '' });
+        setEditFormData({ brand: '', item_name: '', price: '', stock: '', company_name: '', minimum_threshold: '' });
     };
 
     // Save Edit
     const handleSaveEdit = async (id) => {
         try {
             const token = localStorage.getItem('token');
-            await axios.put(`${API_BASE_URL}/update-product/${id}`, editFormData, {
+            const dataToSend = {
+                ...editFormData,
+                minimum_threshold: editFormData.minimum_threshold !== '' ? Number(editFormData.minimum_threshold) : 10
+            };
+            await axios.put(`${API_BASE_URL}/update-product/${id}`, dataToSend, {
                 headers: { Authorization: token }
             });
             setEditingId(null);
@@ -266,6 +277,10 @@ const Products = () => {
                             <label className="form-label" style={{fontWeight: '600', color: '#64748b'}}>Stock Quantity</label>
                             <input type="number" name="stock" value={formData.stock} onChange={handleInputChange} required className="form-input-modern" />
                         </div>
+                        <div className="form-group" style={{width: '150px'}}>
+                            <label className="form-label" style={{fontWeight: '600', color: '#64748b'}}>Min Threshold Alert</label>
+                            <input type="number" name="minimum_threshold" value={formData.minimum_threshold} onChange={handleInputChange} className="form-input-modern" placeholder="Default: 10" />
+                        </div>
                         <div style={{width: '100%', marginTop: '10px'}}>
                             <button type="submit" className="btn-gradient-success">Save Product</button>
                         </div>
@@ -336,10 +351,13 @@ const Products = () => {
                                         {/* Stock */}
                                         <td>
                                             {editingId === product.id ? (
-                                                <input type="number" name="stock" value={editFormData.stock} onChange={handleEditInputChange} className="form-input-modern" style={{padding: '6px', width: '80px'}} />
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                    <input type="number" name="stock" value={editFormData.stock} onChange={handleEditInputChange} className="form-input-modern" style={{padding: '6px', width: '80px'}} placeholder="Stock" />
+                                                    <input type="number" name="minimum_threshold" value={editFormData.minimum_threshold} onChange={handleEditInputChange} className="form-input-modern" style={{padding: '6px', width: '80px'}} placeholder="Min Limit" title="Minimum Threshold" />
+                                                </div>
                                             ) : (
-                                                <span className={`pill ${product.stock < 10 ? 'pill-danger' : 'pill-success'}`}>
-                                                    {product.stock}
+                                                <span className={`pill ${product.stock <= (product.minimumThreshold !== undefined ? product.minimumThreshold : 10) ? 'pill-danger' : 'pill-success'}`}>
+                                                    {product.stock} (Min: {product.minimumThreshold !== undefined ? product.minimumThreshold : 10})
                                                 </span>
                                             )}
                                         </td>

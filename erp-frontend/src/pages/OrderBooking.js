@@ -5,16 +5,7 @@ import DataGrid from '../components/DataGrid';
 import { FaBoxOpen } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
-// Decode role from JWT token
-const decodeJwtRole = (token) => {
-    try {
-        const payload = token.split('.')[1];
-        const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
-        return decoded.role || null;
-    } catch {
-        return null;
-    }
-};
+import { decodeJwtRole } from '../utils/auth';
 
 const OrderBooking = () => {
     const [shops, setShops] = useState([]);

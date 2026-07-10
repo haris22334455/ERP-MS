@@ -12,6 +12,7 @@ const Users = () => {
     const [formData, setFormData] = useState({
         username: '',
         password: '',
+        email: '',
         role: 'staff', // Default
         shop_id: ''
     });
@@ -57,13 +58,14 @@ const Users = () => {
             const payload = {
                 username: formData.username.trim(),
                 password: formData.password,
+                email: formData.email.trim(),
                 role: formData.role,
                 ...(formData.role === 'shopkeeper' && { shop_id: formData.shop_id })
             };
 
             await axios.post(`${API_BASE_URL}/register`, payload);
             toast.success("User Created Successfully!");
-            setFormData({ username: '', password: '', role: 'staff', shop_id: '' });
+            setFormData({ username: '', password: '', email: '', role: 'staff', shop_id: '' });
             fetchUsers();
         } catch (err) {
             console.error(err);
@@ -99,6 +101,7 @@ const Users = () => {
     const columns = [
         { header: 'ID', field: 'id' },
         { header: 'Username', field: 'username', render: (row) => <strong>{row.username}</strong> },
+        { header: 'Email', field: 'email' },
         {
             header: 'Role',
             field: 'role',
@@ -168,6 +171,16 @@ const Users = () => {
                                 type="password"
                                 value={formData.password}
                                 onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                required
+                            />
+                        </div>
+                        <div className="form-group" style={{ marginBottom: '20px' }}>
+                            <label className="form-label" style={{fontWeight: '600', color: '#64748b'}}>Email</label>
+                            <input
+                                className="form-input-modern"
+                                type="email"
+                                value={formData.email}
+                                onChange={e => setFormData({ ...formData, email: e.target.value })}
                                 required
                             />
                         </div>

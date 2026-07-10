@@ -10,35 +10,15 @@ import Shops from './pages/Shops';
 import ShopLedger from './pages/ShopLedger';
 import OrderBooking from './pages/OrderBooking';
 import Orders from './pages/Orders';
+import MyOrders from './pages/MyOrders';
 import Reports from './pages/Reports';
 import Users from './pages/Users';
 import Products from './pages/Products';
 import Expenses from './pages/Expenses';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
-/**
- * ✅ SECURITY FIX: Decode the JWT token to extract the role.
- * 
- * Previously, the role was read directly from localStorage which can be
- * freely edited by any user via browser DevTools (e.g., changing "staff" to "admin").
- * 
- * Now, the role is extracted from the JWT token's payload which is cryptographically
- * signed by the server — it cannot be tampered with without invalidating the signature.
- * 
- * Note: JWT payload is Base64 encoded but NOT encrypted. This is safe because:
- * - We're only using it for UI display decisions (not secrets)
- * - The backend ALWAYS re-verifies the JWT on every API call independently
- */
-const decodeJwtRole = (token) => {
-  try {
-    // JWT structure: header.payload.signature — we decode the payload (middle part)
-    const payload = token.split('.')[1];
-    // Base64url decode
-    const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
-    return decoded.role || null;
-  } catch {
-    return null;
-  }
-};
+import { decodeJwtRole } from './utils/auth';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const token = localStorage.getItem('token');
@@ -98,8 +78,10 @@ function App() {
         }}
       />
       <Routes>
-        {/* Login Page (No Layout) */}
+        {/* Login Page */}
         <Route path="/" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Protected Routes (With Layout) */}
         <Route element={<Layout />}>
@@ -143,19 +125,26 @@ function App() {
 
           {/* Shared Routes (Admin, Staff) */}
           <Route path="/shops" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff']}>
+            <ProtectedRoute allowedRoles={['admin']}>
               <Shops />
             </ProtectedRoute>
           } />
+          
+          {/* Shopkeeper Routes */}
           <Route path="/shops/:id" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff', 'shopkeeper']}>
+            <ProtectedRoute allowedRoles={['admin', 'shopkeeper']}>
               <ShopLedger />
             </ProtectedRoute>
           } />
+          <Route path="/my-orders" element={
+            <ProtectedRoute allowedRoles={['shopkeeper']}>
+              <MyOrders />
+            </ProtectedRoute>
+          } />
 
-          {/* Shopkeeper & Staff & Admin */}
+          {/* Shopkeeper & Staff */}
           <Route path="/order-booking" element={
-            <ProtectedRoute allowedRoles={['admin', 'staff', 'shopkeeper']}>
+            <ProtectedRoute allowedRoles={['staff', 'shopkeeper']}>
               <OrderBooking />
             </ProtectedRoute>
           } />

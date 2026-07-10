@@ -5,16 +5,7 @@ import Swal from 'sweetalert2';
 import axios from 'axios';
 import API_BASE_URL from '../config';
 
-// Decode role from JWT token (same approach as App.js — safe, tamper-proof)
-const decodeJwtRole = (token) => {
-    try {
-        const payload = token.split('.')[1];
-        const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
-        return decoded.role || null;
-    } catch {
-        return null;
-    }
-};
+import { decodeJwtRole } from '../utils/auth';
 
 const Sidebar = ({ isCollapsed, toggleCollapse }) => {
     const location = useLocation();
@@ -23,20 +14,55 @@ const Sidebar = ({ isCollapsed, toggleCollapse }) => {
     const role = decodeJwtRole(token);
     const shopId = localStorage.getItem('shop_id');
 
-    // Navigation Items
-    const allNavItems = [
-        { path: '/dashboard', label: 'Dashboard', icon: <FaHome />, roles: ['admin'] },
-        { path: '/products', label: 'Products', icon: <FaBoxes />, roles: ['admin'] },
-        { path: '/expenses', label: 'Expenses', icon: <FaMoneyBillWave />, roles: ['admin'] },
-        { path: '/shops', label: 'Manage Shops', icon: <FaStore />, roles: ['admin', 'staff'] },
-        { path: `/shops/${shopId || ''}`, label: 'My Ledger', icon: <FaStore />, roles: ['shopkeeper'] },
-        { path: '/order-booking', label: 'Book Order', icon: <FaShoppingCart />, roles: ['admin', 'staff', 'shopkeeper'] },
-        { path: '/orders', label: 'Pending Orders', icon: <FaClipboardList />, roles: ['admin', 'staff'] },
-        { path: '/reports', label: 'Reports', icon: <FaChartLine />, roles: ['admin'] },
-        { path: '/users', label: 'Manage Users', icon: <FaUsers />, roles: ['admin'] },
+    // Navigation Groups
+    const navGroups = [
+        {
+            groupName: 'OVERVIEW',
+            roles: ['admin'],
+            items: [
+                { path: '/dashboard', label: 'Dashboard', icon: <FaHome />, roles: ['admin'] }
+            ]
+        },
+        {
+            groupName: 'INVENTORY',
+            roles: ['admin'],
+            items: [
+                { path: '/products', label: 'Products', icon: <FaBoxes />, roles: ['admin'] }
+            ]
+        },
+        {
+            groupName: 'ORDERS',
+            roles: ['admin', 'staff', 'shopkeeper'],
+            items: [
+                { path: '/order-booking', label: 'Book Order', icon: <FaShoppingCart />, roles: ['staff', 'shopkeeper'] },
+                { path: '/my-orders', label: 'My Orders', icon: <FaClipboardList />, roles: ['shopkeeper'] },
+                { path: '/orders', label: 'Manage Orders', icon: <FaClipboardList />, roles: ['admin', 'staff'] }
+            ]
+        },
+        {
+            groupName: 'SHOPS & LEDGER',
+            roles: ['admin', 'shopkeeper'],
+            items: [
+                { path: '/shops', label: 'Manage Shops', icon: <FaStore />, roles: ['admin'] },
+                { path: `/shops/${shopId || ''}`, label: 'My Ledger', icon: <FaStore />, roles: ['shopkeeper'] }
+            ]
+        },
+        {
+            groupName: 'FINANCE',
+            roles: ['admin'],
+            items: [
+                { path: '/expenses', label: 'Expenses', icon: <FaMoneyBillWave />, roles: ['admin'] },
+                { path: '/reports', label: 'Reports', icon: <FaChartLine />, roles: ['admin'] }
+            ]
+        },
+        {
+            groupName: 'SETTINGS',
+            roles: ['admin'],
+            items: [
+                { path: '/users', label: 'Manage Users', icon: <FaUsers />, roles: ['admin'] }
+            ]
+        }
     ];
-
-    const navItems = allNavItems.filter(item => item.roles.includes(role));
 
     const handleLogout = async () => {
         const result = await Swal.fire({title: 'Are you sure?', text: "Are you sure you want to logout?", icon: 'warning', showCancelButton: true, background: 'rgba(255,255,255,0.9)', backdrop: 'rgba(0,0,0,0.4)', customClass: { popup: 'glass-form-card', title: 'gradient-title', confirmButton: 'btn-gradient-success', cancelButton: 'btn-gradient-danger' }, confirmButtonText: 'Yes, proceed!'});
@@ -67,17 +93,26 @@ const Sidebar = ({ isCollapsed, toggleCollapse }) => {
             </div>
 
             {/* Navigation Links */}
-            <nav style={{ flex: 1, marginTop: '20px' }}>
-                {navItems.map((item) => (
-                    <Link
-                        key={item.path}
-                        to={item.path}
-                        className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
-                        title={isCollapsed ? item.label : ''}
-                    >
-                        <span style={{ fontSize: '1.2rem' }}>{item.icon}</span>
-                        {!isCollapsed && <span>{item.label}</span>}
-                    </Link>
+            <nav style={{ flex: 1, marginTop: '10px', overflowY: 'auto' }}>
+                {navGroups.filter(g => g.roles.includes(role)).map((group, index) => (
+                    <div key={index} style={{ marginBottom: '15px' }}>
+                        {!isCollapsed && (
+                            <div style={{ padding: '0 20px', fontSize: '0.75rem', fontWeight: 'bold', color: '#64748B', letterSpacing: '0.05em', marginBottom: '5px' }}>
+                                {group.groupName}
+                            </div>
+                        )}
+                        {group.items.filter(item => item.roles.includes(role)).map((item) => (
+                            <Link
+                                key={item.path}
+                                to={item.path}
+                                className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
+                                title={isCollapsed ? item.label : ''}
+                            >
+                                <span style={{ fontSize: '1.2rem' }}>{item.icon}</span>
+                                {!isCollapsed && <span>{item.label}</span>}
+                            </Link>
+                        ))}
+                    </div>
                 ))}
             </nav>
 

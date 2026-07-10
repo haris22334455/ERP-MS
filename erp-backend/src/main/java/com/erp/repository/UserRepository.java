@@ -9,6 +9,7 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Integer> {
     Optional<User> findByUsername(String username);
+    Optional<User> findByEmail(String email);
 
     @Modifying
     @Query("UPDATE User u SET u.shopId = NULL WHERE u.shopId = :shopId")

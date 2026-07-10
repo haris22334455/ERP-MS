@@ -24,6 +24,9 @@ public class Product {
     @Column(name = "company_name")
     private String companyName;
 
+    @Column(name = "minimum_threshold", nullable = false, columnDefinition = "int default 10")
+    private Integer minimumThreshold = 10;
+
     // Constructors
     public Product() {}
 
@@ -45,4 +48,7 @@ public class Product {
 
     public String getCompanyName() { return companyName; }
     public void setCompanyName(String companyName) { this.companyName = companyName; }
+
+    public Integer getMinimumThreshold() { return minimumThreshold; }
+    public void setMinimumThreshold(Integer minimumThreshold) { this.minimumThreshold = minimumThreshold; }
 }
