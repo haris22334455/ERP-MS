@@ -26,7 +26,9 @@ const Login = () => {
         e.preventDefault();
         try {
             // Sending request to backend
-            const res = await axios.post(`${API_BASE_URL}/login`, { email, password });
+            const cleanEmail = email.trim();
+            const cleanPassword = password.trim();
+            const res = await axios.post(`${API_BASE_URL}/login`, { email: cleanEmail, password: cleanPassword });
 
             // ✅ SECURITY FIX: Only store the token in localStorage.
             // Role is no longer stored in localStorage — it is decoded directly
@@ -54,8 +56,9 @@ const Login = () => {
                 navigate("/"); // Default fallback
             }
         } catch (err) {
-            // ✅ SECURITY FIX: Do not log error details to console in production
-            toast.error("Invalid Credentials");
+            console.error("Login error:", err);
+            const errorMsg = err.response?.data?.message || err.response?.data || err.message || "Invalid Credentials";
+            toast.error(typeof errorMsg === 'string' ? errorMsg : "Invalid Credentials");
         }
     };
 
