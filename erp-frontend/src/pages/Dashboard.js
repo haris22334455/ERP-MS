@@ -3,8 +3,7 @@ import axios from 'axios';
 import API_BASE_URL from '../config';
 import { useNavigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { FaWallet, FaChartLine, FaShoppingCart, FaBoxOpen, FaUsers, FaClipboardList } from 'react-icons/fa';
-import Swal from 'sweetalert2';
+import { FaWallet, FaChartLine, FaBoxOpen, FaUsers, FaClipboardList } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
 const Dashboard = () => {

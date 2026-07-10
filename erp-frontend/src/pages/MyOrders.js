@@ -34,6 +34,7 @@ const MyOrders = () => {
 
     useEffect(() => {
         fetchMyOrders();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [shopId]);
 
     const columns = [
