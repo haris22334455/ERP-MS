@@ -67,6 +67,8 @@ body {
 .app-layout {
   display: flex;
   min-height: 100vh;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 /* Sidebar */
@@ -130,6 +132,8 @@ body {
   transition: margin-left 0.3s ease;
   min-width: 0;
   /* Prevent flex overflow */
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 .main-wrapper.expanded {
