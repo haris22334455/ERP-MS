@@ -21,10 +21,9 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        // ✅ SECURITY FIX: Only allow requests from the specific frontend origin
-        // Do NOT use allowedOrigins("*") — that allows any website to call the API
+        // ✅ Allow all origins to fix Vercel dynamic domain CORS issues
         registry.addMapping("/**")
-                .allowedOrigins(allowedOrigin)
+                .allowedOriginPatterns("*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(false)
