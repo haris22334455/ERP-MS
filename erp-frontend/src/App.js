@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import ScrollToTop from './components/ScrollToTop';
 import { Toaster } from 'react-hot-toast';
 import './App.css';
 import './pages/ModernUI.css'; // Global modern styles
@@ -51,6 +52,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 function App() {
   return (
     <Router>
+      <ScrollToTop />
       <Toaster 
         position="top-right" 
         toastOptions={{
