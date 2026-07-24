@@ -8,6 +8,8 @@ import toast from 'react-hot-toast';
 const Users = () => {
     const [users, setUsers] = useState([]);
     const [shops, setShops] = useState([]);
+    const [requests, setRequests] = useState([]);
+    const [activeTab, setActiveTab] = useState('users'); // 'users' or 'requests'
     const [loading, setLoading] = useState(true);
     const [formData, setFormData] = useState({
         username: '',
@@ -23,12 +25,15 @@ const Users = () => {
 
     const fetchUsers = async () => {
         try {
-            const [usersRes, shopsRes] = await Promise.all([
-                axios.get(`${API_BASE_URL}/users`),
-                axios.get(`${API_BASE_URL}/shops`)
+            const token = localStorage.getItem('token');
+            const [usersRes, shopsRes, requestsRes] = await Promise.all([
+                axios.get(`${API_BASE_URL}/users`, { headers: { Authorization: token } }),
+                axios.get(`${API_BASE_URL}/shops`, { headers: { Authorization: token } }),
+                axios.get(`${API_BASE_URL}/register-requests`, { headers: { Authorization: token } })
             ]);
             setUsers(usersRes.data);
             setShops(shopsRes.data);
+            setRequests(requestsRes.data);
         } catch (err) {
             console.error("Error fetching data:", err);
             toast.error("Error loading users list");
@@ -63,7 +68,8 @@ const Users = () => {
                 ...(formData.role === 'shopkeeper' && { shop_id: formData.shop_id })
             };
 
-            await axios.post(`${API_BASE_URL}/register`, payload);
+            const token = localStorage.getItem('token');
+            await axios.post(`${API_BASE_URL}/register`, payload, { headers: { Authorization: token } });
             toast.success("User Created Successfully!");
             setFormData({ username: '', password: '', email: '', role: 'staff', shop_id: '' });
             fetchUsers();
@@ -86,7 +92,8 @@ const Users = () => {
         const result = await Swal.fire({title: 'Are you sure?', text: "Are you sure you want to delete this user?", icon: 'warning', showCancelButton: true, background: 'rgba(255,255,255,0.9)', backdrop: 'rgba(0,0,0,0.4)', customClass: { popup: 'glass-form-card', title: 'gradient-title', confirmButton: 'btn-gradient-success', cancelButton: 'btn-gradient-danger' }, confirmButtonText: 'Yes, proceed!'});
         if (result.isConfirmed) {
             try {
-                await axios.delete(`${API_BASE_URL}/users/${id}`);
+                const token = localStorage.getItem('token');
+                await axios.delete(`${API_BASE_URL}/users/${id}`, { headers: { Authorization: token } });
                 toast.success("User deleted successfully!");
                 fetchUsers();
             } catch (err) {
@@ -99,7 +106,7 @@ const Users = () => {
     };
 
     const columns = [
-        { header: 'ID', field: 'id' },
+        { header: 'ID', field: 'user_id' },
         { header: 'Username', field: 'username', render: (row) => <strong>{row.username}</strong> },
         { header: 'Email', field: 'email' },
         {
@@ -117,12 +124,54 @@ const Users = () => {
         {
             header: 'Assigned Shop',
             field: 'shop_id',
-            render: (row) => row.shop_id ? shops.find(s => String(s.shopId) === String(row.shop_id))?.shopName || row.shop_id : '-'
+            render: (row) => row.shop_id ? shops.find(s => String(s.shop_id) === String(row.shop_id))?.shop_name || row.shop_id : '-'
         }
     ];
 
     const actions = (row) => (
-        <button onClick={() => handleDelete(row.id)} style={{ padding: '6px 12px', borderRadius: '50px', background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: 'white', border: 'none', cursor: 'pointer', boxShadow: '0 4px 10px rgba(220,38,38,0.3)' }}>️ Delete</button>
+        <button onClick={() => handleDelete(row.user_id)} style={{ padding: '6px 12px', borderRadius: '50px', background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: 'white', border: 'none', cursor: 'pointer', boxShadow: '0 4px 10px rgba(220,38,38,0.3)' }}>🗑️ Delete</button>
+    );
+
+    const handleApproveRequest = async (id) => {
+        try {
+            const token = localStorage.getItem('token');
+            await axios.put(`${API_BASE_URL}/register-requests/${id}/approve`, {}, { headers: { Authorization: token } });
+            toast.success("Request Approved! Shop & User created, Email sent.");
+            fetchUsers();
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to approve request");
+        }
+    };
+
+    const handleRejectRequest = async (id) => {
+        const result = await Swal.fire({title: 'Reject Request?', text: "Are you sure you want to reject this registration?", icon: 'warning', showCancelButton: true, confirmButtonText: 'Yes, reject'});
+        if (result.isConfirmed) {
+            try {
+                const token = localStorage.getItem('token');
+                await axios.put(`${API_BASE_URL}/register-requests/${id}/reject`, {}, { headers: { Authorization: token } });
+                toast.success("Request Rejected.");
+                fetchUsers();
+            } catch (err) {
+                console.error(err);
+                toast.error("Failed to reject request");
+            }
+        }
+    };
+
+    const requestColumns = [
+        { header: 'ID', field: 'id' },
+        { header: 'Full Name', field: 'fullname', render: (row) => <strong>{row.fullname}</strong> },
+        { header: 'Business', field: 'businessname' },
+        { header: 'Email', field: 'email' },
+        { header: 'Phone', field: 'phone' }
+    ];
+
+    const requestActions = (row) => (
+        <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={() => handleApproveRequest(row.id)} className="btn-gradient-success" style={{ padding: '6px 12px', fontSize: '0.85rem' }}>✅ Approve</button>
+            <button onClick={() => handleRejectRequest(row.id)} className="btn-gradient-danger" style={{ padding: '6px 12px', fontSize: '0.85rem' }}>❌ Reject</button>
+        </div>
     );
 
     if (loading) return (
@@ -135,20 +184,52 @@ const Users = () => {
 
     return (
         <div className="animate-fade-in dashboard-container page-content" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
-            <h1 className="gradient-title"> User Management</h1>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h1 className="gradient-title">User Management</h1>
+                <div style={{ display: 'flex', gap: '10px', background: '#e2e8f0', padding: '5px', borderRadius: '12px' }}>
+                    <button 
+                        onClick={() => setActiveTab('users')} 
+                        style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: activeTab === 'users' ? '#ffffff' : 'transparent', color: activeTab === 'users' ? '#3b82f6' : '#64748b', fontWeight: 'bold', cursor: 'pointer', boxShadow: activeTab === 'users' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none' }}>
+                        All Users
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('requests')} 
+                        style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: activeTab === 'requests' ? '#ffffff' : 'transparent', color: activeTab === 'requests' ? '#3b82f6' : '#64748b', fontWeight: 'bold', cursor: 'pointer', boxShadow: activeTab === 'requests' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none' }}>
+                        Pending Requests {requests.length > 0 && <span style={{ background: '#ef4444', color: 'white', borderRadius: '50%', padding: '2px 8px', fontSize: '0.75rem', marginLeft: '5px' }}>{requests.length}</span>}
+                    </button>
+                </div>
+            </div>
 
             <div className="dashboard-analytics-grid" style={{ gridTemplateColumns: '1fr' }}>
-                {/* User List */}
-                <div className="chart-card">
-                    <h3 className="chart-title" style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px' }}> All Users</h3>
-                    <div className="dash-table-wrapper">
-                        <DataGrid
-                            columns={columns}
-                            data={users}
-                            actions={actions}
-                        />
+                
+                {activeTab === 'requests' ? (
+                    <div className="chart-card animate-fade-in">
+                        <h3 className="chart-title" style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px' }}>Shopkeeper Registration Requests</h3>
+                        {requests.length === 0 ? (
+                            <p style={{ textAlign: 'center', color: '#64748b', padding: '30px' }}>No pending registration requests.</p>
+                        ) : (
+                            <div className="dash-table-wrapper">
+                                <DataGrid
+                                    columns={requestColumns}
+                                    data={requests}
+                                    actions={requestActions}
+                                />
+                            </div>
+                        )}
                     </div>
-                </div>
+                ) : (
+                    <>
+                        {/* User List */}
+                        <div className="chart-card animate-fade-in">
+                            <h3 className="chart-title" style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px' }}>All Users</h3>
+                            <div className="dash-table-wrapper">
+                                <DataGrid
+                                    columns={columns}
+                                    data={users}
+                                    actions={actions}
+                                />
+                            </div>
+                        </div>
 
                 {/* Add User Form */}
                 <div className="glass-form-card">
@@ -209,8 +290,8 @@ const Users = () => {
                                 >
                                     <option value="">-- Select Shop --</option>
                                     {shops.map(s => (
-                                        <option key={s.shopId} value={s.shopId}>
-                                            {s.shopName}
+                                        <option key={s.shop_id} value={s.shop_id}>
+                                            {s.shop_name}
                                         </option>
                                     ))}
                                 </select>
@@ -222,6 +303,8 @@ const Users = () => {
                         </div>
                     </form>
                 </div>
+                </>
+                )}
             </div>
         </div>
     );

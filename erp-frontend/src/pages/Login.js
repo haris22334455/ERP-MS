@@ -10,6 +10,7 @@ const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -24,6 +25,7 @@ const Login = () => {
 
     const handleLogin = async (e) => {
         e.preventDefault();
+        setLoading(true);
         try {
             // Sending request to backend
             const cleanEmail = email.trim();
@@ -59,6 +61,7 @@ const Login = () => {
             console.error("Login error:", err);
             const errorMsg = err.response?.data?.message || err.response?.data || err.message || "Invalid Credentials";
             toast.error(typeof errorMsg === 'string' ? errorMsg : "Invalid Credentials");
+            setLoading(false);
         }
     };
 
@@ -101,14 +104,20 @@ const Login = () => {
                             Forgot Password?
                         </a>
                     </div>
-                    <button
-                        type="submit"
-                        className="btn-gradient-primary"
-                        style={{ width: '100%', padding: '15px', fontSize: '1.1rem', marginTop: '10px' }}
-                    >
-                         Sign In
+
+                    <button type="submit" className="btn-gradient-primary w-100" style={{ padding: '14px', fontSize: '1.1rem' }} disabled={loading}>
+                        {loading ? 'Authenticating...' : 'Sign In'}
                     </button>
                 </form>
+
+                <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                    <p style={{ color: '#64748b', fontSize: '0.95rem' }}>
+                        Don't have an account?{' '}
+                        <a href="/signup" onClick={(e) => { e.preventDefault(); navigate('/signup'); }} style={{ color: '#10b981', textDecoration: 'none', fontWeight: '600' }}>
+                            Register here
+                        </a>
+                    </p>
+                </div>
             </div>
         </div>
     );

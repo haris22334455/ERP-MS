@@ -15,7 +15,8 @@ const Expenses = () => {
 
     const fetchExpenses = async () => {
         try {
-            const res = await axios.get(`${API_BASE_URL}/expenses`);
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`${API_BASE_URL}/expenses`, { headers: { Authorization: token } });
             setExpenses(res.data);
         } catch (err) {
             console.error("Error fetching expenses:", err);
@@ -51,7 +52,8 @@ const Expenses = () => {
                 category: formData.category
             };
 
-            await axios.post(`${API_BASE_URL}/add-expense`, payload);
+            const token = localStorage.getItem('token');
+            await axios.post(`${API_BASE_URL}/add-expense`, payload, { headers: { Authorization: token } });
             toast.success("Expense Added Successfully!");
             setFormData({ description: '', amount: '', category: 'General' });
             fetchExpenses();

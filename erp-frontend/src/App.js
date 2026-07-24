@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import './App.css';
 import './pages/ModernUI.css'; // Global modern styles
 import Login from './pages/Login';
+import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import Layout from './components/Layout';
 import Shops from './pages/Shops';
@@ -82,6 +83,7 @@ function App() {
       <Routes>
         {/* Login Page */}
         <Route path="/" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
 

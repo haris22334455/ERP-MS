@@ -16,7 +16,8 @@ const Shops = () => {
 
     const fetchShops = async () => {
         try {
-            const res = await axios.get(`${API_BASE_URL}/shops`);
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`${API_BASE_URL}/shops`, { headers: { Authorization: token } });
             setShops(res.data);
         } catch (err) {
             console.error("Error fetching shops:", err);
@@ -46,14 +47,15 @@ const Shops = () => {
 
         try {
             // 1. Create Shop
-            const shopRes = await axios.post(`${API_BASE_URL}/add-shop`, newShop);
+            const token = localStorage.getItem('token');
+            const shopRes = await axios.post(`${API_BASE_URL}/add-shop`, newShop, { headers: { Authorization: token } });
 
             // Try to retrieve ID from response, otherwise fetch all shops to find it
             let newShopId = shopRes.data.shopId || shopRes.data.shop_id || shopRes.data.id;
 
             if (!newShopId) {
                 // Fallback: Fetch all shops and find the one we just created by name
-                const allShopsRes = await axios.get(`${API_BASE_URL}/shops`);
+                const allShopsRes = await axios.get(`${API_BASE_URL}/shops`, { headers: { Authorization: token } });
                 const createdShop = allShopsRes.data.find(s => (s.shopName || s.shop_name) === newShop.shop_name);
                 if (createdShop) {
                     newShopId = createdShop.shopId || createdShop.shop_id;
@@ -118,7 +120,8 @@ const Shops = () => {
         });
         if (result.isConfirmed) {
             try {
-                await axios.delete(`${API_BASE_URL}/delete-shop/${id}`);
+                const token = localStorage.getItem('token');
+                await axios.delete(`${API_BASE_URL}/delete-shop/${id}`, { headers: { Authorization: token } });
                 toast.success("Shop Deleted Successfully");
                 fetchShops();
             } catch (err) {
@@ -131,12 +134,12 @@ const Shops = () => {
 
     // DataGrid Columns
     const shopColumns = [
-        { header: 'ID', field: 'shopId' },
-        { header: 'Shop Name', field: 'shopName', render: row => <strong>{row.shopName || row.shop_name}</strong> },
-        { header: 'Address', field: 'shopAddress' },
+        { header: 'ID', field: 'shop_id' },
+        { header: 'Shop Name', field: 'shop_name', render: row => <strong>{row.shop_name || row.shopName}</strong> },
+        { header: 'Address', field: 'shop_address' },
         {
-            header: 'Current Debt', field: 'totalDebt', render: row => {
-                const debt = row.totalDebt !== undefined ? row.totalDebt : row.total_debt;
+            header: 'Current Debt', field: 'total_debt', render: row => {
+                const debt = row.total_debt !== undefined ? row.total_debt : row.totalDebt;
                 return (
                 <span className={`status-pill ${debt > 0 ? 'status-danger' : 'status-success'}`}>
                     Rs. {debt}
@@ -147,7 +150,7 @@ const Shops = () => {
     ];
 
     const shopActions = (row) => {
-        const id = row.shopId || row.shop_id;
+        const id = row.shop_id || row.shopId;
         return (
         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
             <button onClick={() => navigate(`/shops/${id}`)} className="btn-gradient-primary" style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '50px' }}>

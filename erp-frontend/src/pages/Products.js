@@ -107,6 +107,7 @@ const Products = () => {
             const token = localStorage.getItem('token');
             const dataToSend = {
                 ...formData,
+                brand_name: formData.brand, // Ensure brand_name is also populated for display
                 minimum_threshold: formData.minimum_threshold !== '' ? Number(formData.minimum_threshold) : 10
             };
             await axios.post(`${API_BASE_URL}/add-product`, dataToSend, {
@@ -127,12 +128,12 @@ const Products = () => {
     const handleEditClick = (product) => {
         setEditingId(product.id);
         setEditFormData({
-            brand: product.brandName || '',
-            item_name: product.itemName || '',
+            brand: product.brand_name || product.brandName || '',
+            item_name: product.item_name || product.itemName || '',
             price: product.price,
             stock: product.stock,
-            company_name: product.companyName || '',
-            minimum_threshold: product.minimumThreshold !== undefined ? product.minimumThreshold : 10
+            company_name: product.company_name || product.companyName || '',
+            minimum_threshold: product.minimum_threshold !== undefined ? product.minimum_threshold : (product.minimumThreshold !== undefined ? product.minimumThreshold : 10)
         });
     };
 
@@ -148,6 +149,7 @@ const Products = () => {
             const token = localStorage.getItem('token');
             const dataToSend = {
                 ...editFormData,
+                brand_name: editFormData.brand, // Ensure brand_name is synced with brand for display
                 minimum_threshold: editFormData.minimum_threshold !== '' ? Number(editFormData.minimum_threshold) : 10
             };
             await axios.put(`${API_BASE_URL}/update-product/${id}`, dataToSend, {
@@ -317,7 +319,7 @@ const Products = () => {
                                             {editingId === product.id ? (
                                                 <input type="text" name="brand" value={editFormData.brand} onChange={handleEditInputChange} className="form-input-modern" style={{padding: '6px', width: '120px'}} />
                                             ) : (
-                                                product.brandName || product.brand_name || 'N/A'
+                                                product.brand_name || product.brandName || 'N/A'
                                             )}
                                         </td>
 
@@ -326,7 +328,7 @@ const Products = () => {
                                             {editingId === product.id ? (
                                                 <input type="text" name="item_name" value={editFormData.item_name} onChange={handleEditInputChange} className="form-input-modern" style={{padding: '6px', width: '140px'}} />
                                             ) : (
-                                                product.itemName || product.item_name
+                                                product.item_name || product.itemName
                                             )}
                                         </td>
 
@@ -335,7 +337,7 @@ const Products = () => {
                                             {editingId === product.id ? (
                                                 <input type="text" name="company_name" value={editFormData.company_name} onChange={handleEditInputChange} className="form-input-modern" style={{padding: '6px', width: '120px'}} />
                                             ) : (
-                                                product.companyName || product.company_name || 'N/A'
+                                                product.company_name || product.companyName || 'N/A'
                                             )}
                                         </td>
 
@@ -356,8 +358,8 @@ const Products = () => {
                                                     <input type="number" name="minimum_threshold" value={editFormData.minimum_threshold} onChange={handleEditInputChange} className="form-input-modern" style={{padding: '6px', width: '80px'}} placeholder="Min Limit" title="Minimum Threshold" />
                                                 </div>
                                             ) : (
-                                                <span className={`pill ${product.stock <= (product.minimumThreshold !== undefined ? product.minimumThreshold : 10) ? 'pill-danger' : 'pill-success'}`}>
-                                                    {product.stock} (Min: {product.minimumThreshold !== undefined ? product.minimumThreshold : 10})
+                                                <span className={`pill ${product.stock <= (product.minimum_threshold !== undefined ? product.minimum_threshold : 10) ? 'pill-danger' : 'pill-success'}`}>
+                                                    {product.stock} (Min: {product.minimum_threshold !== undefined ? product.minimum_threshold : 10})
                                                 </span>
                                             )}
                                         </td>

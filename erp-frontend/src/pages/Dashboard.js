@@ -86,12 +86,12 @@ const Dashboard = () => {
                         {lowStockProducts.map(prod => (
                             <div key={prod.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: 'white', borderRadius: '8px', border: '1px solid #feb2b2', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
                                 <div>
-                                    <strong style={{ color: '#2d3748', fontSize: '0.9rem' }}>{prod.itemName || prod.item_name}</strong>
-                                    <div style={{ fontSize: '0.75rem', color: '#718096' }}>{prod.brandName || prod.brand}</div>
+                                    <strong style={{ color: '#2d3748', fontSize: '0.9rem' }}>{prod.item_name || prod.itemName}</strong>
+                                    <div style={{ fontSize: '0.75rem', color: '#718096' }}>{prod.brand_name || prod.brand}</div>
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
                                     <span style={{ color: '#e53e3e', fontWeight: 'bold', fontSize: '0.95rem' }}>Stock: {prod.stock}</span>
-                                    <span style={{ fontSize: '0.7rem', color: '#a0aec0' }}>Min: {prod.minimumThreshold !== undefined ? prod.minimumThreshold : 10}</span>
+                                    <span style={{ fontSize: '0.7rem', color: '#a0aec0' }}>Min: {prod.minimum_threshold !== undefined ? prod.minimum_threshold : 10}</span>
                                 </div>
                             </div>
                         ))}

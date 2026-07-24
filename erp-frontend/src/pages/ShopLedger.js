@@ -24,7 +24,8 @@ const ShopLedger = () => {
 
     const fetchLedger = async () => {
         try {
-            const res = await axios.get(`${API_BASE_URL}/shop-ledger/${id}`);
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`${API_BASE_URL}/shop-ledger/${id}`, { headers: { Authorization: token } });
             setLedger(res.data);
         } catch (err) {
             console.error(err);
@@ -59,7 +60,8 @@ const ShopLedger = () => {
         };
 
         try {
-            await axios.post(`${API_BASE_URL}/add-transaction`, payload);
+            const token = localStorage.getItem('token');
+            await axios.post(`${API_BASE_URL}/add-transaction`, payload, { headers: { Authorization: token } });
             toast.success("Transaction Recorded!");
             setTransaction({ description: '', amount: '', type: 'credit' });
             fetchLedger();

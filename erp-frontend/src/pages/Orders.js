@@ -19,9 +19,10 @@ const Orders = () => {
 
     const fetchData = async () => {
         try {
+            const token = localStorage.getItem('token');
             const [ordersRes, shopsRes] = await Promise.all([
-                axios.get(`${API_BASE_URL}/orders`),
-                axios.get(`${API_BASE_URL}/shops`)
+                axios.get(`${API_BASE_URL}/orders`, { headers: { Authorization: token } }),
+                axios.get(`${API_BASE_URL}/shops`, { headers: { Authorization: token } })
             ]);
             setOrders(ordersRes.data);
             setShops(shopsRes.data);
@@ -41,7 +42,8 @@ const Orders = () => {
         const result = await Swal.fire({title: 'Are you sure?', text: "Confirm Delivery? Account balance will be updated.", icon: 'warning', showCancelButton: true, background: 'rgba(255,255,255,0.9)', backdrop: 'rgba(0,0,0,0.4)', customClass: { popup: 'glass-form-card', title: 'gradient-title', confirmButton: 'btn-gradient-success', cancelButton: 'btn-gradient-danger' }, confirmButtonText: 'Yes, proceed!'});
         if (result.isConfirmed) {
             try {
-                await axios.put(`${API_BASE_URL}/deliver-order/${orderId}`);
+                const token = localStorage.getItem('token');
+                await axios.put(`${API_BASE_URL}/deliver-order/${orderId}`, {}, { headers: { Authorization: token } });
                 toast.success("Order Delivered & Ledger Updated!");
                 fetchData();
             } catch (err) {
@@ -54,7 +56,8 @@ const Orders = () => {
         const result = await Swal.fire({title: 'Are you sure?', text: "Are you sure you want to cancel this order? Stock will be restored.", icon: 'warning', showCancelButton: true, background: 'rgba(255,255,255,0.9)', backdrop: 'rgba(0,0,0,0.4)', customClass: { popup: 'glass-form-card', title: 'gradient-title', confirmButton: 'btn-gradient-success', cancelButton: 'btn-gradient-danger' }, confirmButtonText: 'Yes, cancel it!'});
         if (result.isConfirmed) {
             try {
-                await axios.put(`${API_BASE_URL}/cancel-order/${orderId}`);
+                const token = localStorage.getItem('token');
+                await axios.put(`${API_BASE_URL}/cancel-order/${orderId}`, {}, { headers: { Authorization: token } });
                 toast.success("Order Cancelled & Stock Restored!");
                 fetchData();
             } catch (err) {
@@ -65,12 +68,13 @@ const Orders = () => {
 
     const handleOpenReturnModal = async (order) => {
         try {
-            const res = await axios.get(`${API_BASE_URL}/order-items/${order.orderId}`);
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`${API_BASE_URL}/orders/${order.order_id}/items`, { headers: { Authorization: token } });
             setSelectedOrder(order);
             setOrderItems(res.data);
             const initialQtys = {};
             res.data.forEach(item => {
-                initialQtys[item.productId] = 0;
+                initialQtys[item.product_id] = 0;
             });
             setReturnQuantities(initialQtys);
             setShowReturnModal(true);
@@ -107,9 +111,10 @@ const Orders = () => {
         }
 
         try {
-            const res = await axios.post(`${API_BASE_URL}/return-order/${selectedOrder.orderId}`, {
+            const token = localStorage.getItem('token');
+            const res = await axios.post(`${API_BASE_URL}/orders/${selectedOrder.order_id}/return`, {
                 items: itemsToReturn
-            });
+            }, { headers: { Authorization: token } });
             toast.success(res.data.message || "Return processed successfully!");
             setShowReturnModal(false);
             fetchData();
@@ -149,21 +154,21 @@ const Orders = () => {
 
     // DataGrid Config
     const orderColumns = [
-        { header: 'Order ID', field: 'orderId', render: row => `#${row.orderId}` },
-        { header: 'Shop Name', field: 'shopId', render: row => <strong>{getShopName(row.shopId)}</strong> },
-        { header: 'Amount', field: 'totalAmount', render: row => <strong>Rs. {row.totalAmount}</strong> },
+        { header: 'Order ID', field: 'order_id', render: row => `#${row.order_id}` },
+        { header: 'Shop Name', field: 'shop_id', render: row => <strong>{getShopName(row.shop_id)}</strong> },
+        { header: 'Amount', field: 'total_amount', render: row => <strong>Rs. {row.total_amount}</strong> },
         {
             header: 'Status', field: 'status', render: row => renderStatusPill(row.status)
         },
-        { header: 'Date', field: 'orderDate', render: row => new Date(row.orderDate).toLocaleDateString() }
+        { header: 'Date', field: 'order_date', render: row => new Date(row.order_date).toLocaleDateString() }
     ];
 
     const pendingActions = (row) => (
         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-            <button onClick={() => handleDeliver(row.orderId)} className="btn-gradient-success" style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '50px', border: 'none', cursor: 'pointer' }}>
+            <button onClick={() => handleDeliver(row.order_id)} className="btn-gradient-success" style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '50px', border: 'none', cursor: 'pointer' }}>
                  Mark as Delivered
             </button>
-            <button onClick={() => handleCancel(row.orderId)} className="btn-gradient-danger" style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '50px', border: 'none', cursor: 'pointer' }}>
+            <button onClick={() => handleCancel(row.order_id)} className="btn-gradient-danger" style={{ padding: '6px 12px', fontSize: '0.8rem', borderRadius: '50px', border: 'none', cursor: 'pointer' }}>
                  Cancel Order
             </button>
         </div>
@@ -256,26 +261,26 @@ const Orders = () => {
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '15px', marginBottom: '20px' }}>
                             <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '800', color: '#1e293b' }}>
-                                Process Returns for Order #{selectedOrder.orderId}
+                                Process Returns for Order #{selectedOrder.order_id}
                             </h3>
                             <button onClick={() => setShowReturnModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#64748b' }}>✕</button>
                         </div>
                         
                         <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '20px' }}>
-                            Shop: <strong>{getShopName(selectedOrder.shopId)}</strong> | Date: {new Date(selectedOrder.orderDate).toLocaleDateString()}
+                            Shop: <strong>{getShopName(selectedOrder.shop_id)}</strong> | Date: {new Date(selectedOrder.order_date).toLocaleDateString()}
                         </p>
 
                         <form onSubmit={handleReturnSubmit}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '25px' }}>
                                 {orderItems.map(item => {
-                                    const availableToReturn = item.quantity - item.returnedQuantity;
+                                    const availableToReturn = item.quantity - item.returned_quantity;
                                     return (
-                                        <div key={item.productId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                                        <div key={item.product_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                                             <div style={{ flex: 1 }}>
-                                                <strong style={{ color: '#1e293b' }}>{item.itemName}</strong>
-                                                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Brand: {item.brandName} | Price: Rs. {item.priceAtSale}</div>
+                                                <strong style={{ color: '#1e293b' }}>{item.products?.item_name || 'Unknown'}</strong>
+                                                <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Brand: {item.products?.brand_name || 'N/A'} | Price: Rs. {item.price_at_sale}</div>
                                                 <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '4px' }}>
-                                                    Bought: <span style={{ fontWeight: 600 }}>{item.quantity}</span> | Returned: <span style={{ color: '#ef4444', fontWeight: 600 }}>{item.returnedQuantity}</span>
+                                                    Bought: <span style={{ fontWeight: 600 }}>{item.quantity}</span> | Returned: <span style={{ color: '#ef4444', fontWeight: 600 }}>{item.returned_quantity}</span>
                                                 </div>
                                             </div>
                                             
@@ -287,8 +292,8 @@ const Orders = () => {
                                                             type="number" 
                                                             min="0"
                                                             max={availableToReturn}
-                                                            value={returnQuantities[item.productId] || 0}
-                                                            onChange={e => handleQtyChange(item.productId, e.target.value, availableToReturn)}
+                                                            value={returnQuantities[item.product_id] || 0}
+                                                            onChange={e => handleQtyChange(item.product_id, e.target.value, availableToReturn)}
                                                             className="form-input-modern"
                                                             style={{ width: '80px', padding: '8px' }}
                                                         />

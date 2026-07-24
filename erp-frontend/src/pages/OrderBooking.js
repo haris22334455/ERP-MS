@@ -63,7 +63,7 @@ const OrderBooking = () => {
 
         const newItem = {
             product_id: productDetails.id,
-            item_name: productDetails.itemName || productDetails.item_name,
+            item_name: productDetails.item_name || productDetails.itemName,
             price: productDetails.price,
             quantity: parseInt(quantity),
             total: productDetails.price * parseInt(quantity)
@@ -147,7 +147,7 @@ const OrderBooking = () => {
 
         const newItem = {
             product_id: product.id,
-            item_name: product.itemName || product.item_name,
+            item_name: product.item_name || product.itemName,
             price: product.price,
             quantity: parseInt(qty),
             total: product.price * parseInt(qty)
@@ -189,8 +189,8 @@ const OrderBooking = () => {
                                 <div className="product-icon">
                                     <FaBoxOpen style={{ fontSize: '2rem', color: 'var(--emerald-500)' }} />
                                 </div>
-                                <h4>{product.brandName || product.brand}</h4>
-                                <h3>{product.itemName || product.item_name}</h3>
+                                <h4>{product.brand_name || product.brand}</h4>
+                                <h3>{product.item_name || product.itemName}</h3>
                                 <div className="price-tag">Rs. {product.price}</div>
                                 <div className={`stock-badge ${product.stock < 10 ? 'low' : ''}`}>
                                     {product.stock} in stock
@@ -265,9 +265,9 @@ const OrderBooking = () => {
                             >
                                 <option value="">-- Choose Shop --</option>
                                 {shops.map(s => {
-                                    const sId = s.shopId || s.shop_id;
-                                    const sName = s.shopName || s.shop_name;
-                                    const sAddress = s.shopAddress || s.shop_address;
+                                    const sId = s.shop_id || s.shopId;
+                                    const sName = s.shop_name || s.shopName;
+                                    const sAddress = s.shop_address || s.shopAddress;
                                     return <option key={sId} value={sId}>{sName} ({sAddress})</option>;
                                 })}
                             </select>
@@ -283,7 +283,7 @@ const OrderBooking = () => {
                             >
                                 <option value="">-- Choose Product --</option>
                                 {products.map(p => {
-                                    const pName = p.itemName || p.item_name;
+                                    const pName = p.item_name || p.itemName;
                                     return <option key={p.id} value={p.id}>{pName} - Rs.{p.price} (Stock: {p.stock})</option>;
                                 })}
                             </select>
@@ -311,7 +311,7 @@ const OrderBooking = () => {
                     {/* RIGHT PANEL: CART */}
                     <div className="glass-form-card" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                         <h3 style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '10px', marginBottom: '15px' }}>️ Order Summary</h3>
-                        {selectedShop && <p style={{ color: 'var(--text-secondary)', marginBottom: '15px' }}><strong>Shop:</strong> {shops.find(s => (s.shopId || s.shop_id) === Number(selectedShop))?.shopName || shops.find(s => (s.shopId || s.shop_id) === Number(selectedShop))?.shop_name}</p>}
+                        {selectedShop && <p style={{ color: 'var(--text-secondary)', marginBottom: '15px' }}><strong>Shop:</strong> {shops.find(s => (s.shop_id || s.shopId) === Number(selectedShop))?.shop_name || shops.find(s => (s.shop_id || s.shopId) === Number(selectedShop))?.shopName}</p>}
 
                         <div style={{ flex: 1, marginBottom: '20px' }} className="dash-table-wrapper">
                             <DataGrid

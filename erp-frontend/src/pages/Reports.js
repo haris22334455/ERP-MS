@@ -29,7 +29,8 @@ const Reports = () => {
     const fetchDaily = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`${API_BASE_URL}/admin/daily-report`);
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`${API_BASE_URL}/admin/daily-report`, { headers: { Authorization: token } });
             setDailyReport(res.data);
         } catch (err) {
             console.error(err);
@@ -58,7 +59,8 @@ const Reports = () => {
     const fetchProfit = async () => {
         setLoading(true);
         try {
-            const res = await axios.get(`${API_BASE_URL}/admin/net-profit?month=${month}&year=${year}`);
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`${API_BASE_URL}/admin/net-profit?month=${month}&year=${year}`, { headers: { Authorization: token } });
             setProfitReport(res.data);
         } catch (err) {
             console.error(err);
@@ -80,7 +82,8 @@ const Reports = () => {
     const handleExpenseSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post(`${API_BASE_URL}/add-expense`, expense);
+            const token = localStorage.getItem('token');
+            await axios.post(`${API_BASE_URL}/add-expense`, expense, { headers: { Authorization: token } });
             toast.success("Expense Added!");
             setExpense({ description: '', amount: '', category: 'General' });
             if (activeTab === 'profit') fetchProfit(); // Update profit if viewing
@@ -92,7 +95,8 @@ const Reports = () => {
     // Download PDF Report
     const downloadPDF = async (period) => {
         try {
-            const res = await axios.get(`${API_BASE_URL}/admin/ledger-report?period=${period}`);
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`${API_BASE_URL}/admin/ledger-report?period=${period}`, { headers: { Authorization: token } });
             const data = res.data;
 
             if (!data || data.length === 0) {

@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model MA_Traders {
+  id           Int     @id @default(autoincrement())
+  item_name    String  @db.VarChar
+  brand_name   String  @db.VarChar
+  price        Decimal @db.Decimal
+  stock        Int
+  company_name String? @db.VarChar(100)
+
+  @@map("MA Traders")
+}
+
+model expenses {
+  expense_id  Int       @id @default(autoincrement())
+  description String    @db.VarChar(255)
+  amount      Decimal   @db.Decimal(38, 2)
+  category    String?   @db.VarChar(255)
+  date        DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model jwt_blacklist {
+  id     BigInt   @id @default(autoincrement())
+  expiry DateTime @db.Timestamptz(6)
+  token  String   @unique(map: "ukcyoqfswqavc5tacxw1286l3nb") @db.VarChar(1000)
+}
+
+model ledger {
+  ledger_id   Int       @id @default(autoincrement())
+  shop_id     Int?
+  description String?   @db.VarChar(255)
+  debit       Decimal?  @default(0.00) @db.Decimal(38, 2)
+  credit      Decimal?  @default(0.00) @db.Decimal(38, 2)
+  balance     Decimal?  @db.Decimal(38, 2)
+  date        DateTime? @default(now()) @db.Timestamp(6)
+  shops       shops?    @relation(fields: [shop_id], references: [shop_id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model order_items {
+  item_id           Int       @id @default(autoincrement())
+  order_id          Int?
+  product_id        Int?
+  quantity          Int
+  price_at_sale     Decimal   @db.Decimal(38, 2)
+  returned_quantity Int       @default(0)
+  orders            orders?   @relation(fields: [order_id], references: [order_id], onDelete: Cascade, onUpdate: NoAction)
+  products          products? @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model orders {
+  order_id     Int           @id @default(autoincrement())
+  shop_id      Int?
+  total_amount Decimal?      @db.Decimal(38, 2)
+  status       String?       @default("pending") @db.VarChar(255)
+  order_date   DateTime?     @default(now()) @db.Timestamp(6)
+  user_id      Int?
+  order_items  order_items[]
+  shops        shops?        @relation(fields: [shop_id], references: [shop_id], onDelete: NoAction, onUpdate: NoAction)
+  users        users?        @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model password_reset_tokens {
+  id         BigInt    @id @default(autoincrement())
+  expirydate DateTime? @db.Timestamp(6)
+  token      String?   @db.VarChar(255)
+  user_id    Int       @unique(map: "ukla2ts67g4oh2sreayswhox1i6")
+  users      users     @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "fkk3ndxg5xp6v7wd4gjyusp15gq")
+}
+
+model products {
+  id                Int           @id @default(autoincrement())
+  brand             String?       @db.VarChar(255)
+  item_name         String?       @db.VarChar(255)
+  price             Decimal?      @db.Decimal(38, 2)
+  stock             Int?
+  company_name      String?       @default("MA Traders") @db.VarChar(255)
+  brand_name        String?       @db.VarChar(255)
+  is_deleted        Boolean?
+  minimum_threshold Int           @default(10)
+  order_items       order_items[]
+}
+
+model registration_requests {
+  id           Int       @id @default(autoincrement())
+  businessname String?   @db.VarChar(255)
+  createdat    DateTime  @db.Timestamp(6)
+  email        String    @unique(map: "ukcpvtv02wv5efi4ugad0va9gdn") @db.VarChar(255)
+  fullname     String    @db.VarChar(255)
+  password     String    @db.VarChar(255)
+  phone        String?   @db.VarChar(255)
+  reviewedat   DateTime? @db.Timestamp(6)
+  status       String    @db.VarChar(255)
+}
+
+model shops {
+  shop_id      Int      @id @default(autoincrement())
+  shop_name    String   @db.VarChar(255)
+  shop_address String?  @db.VarChar(255)
+  total_debt   Decimal? @default(0.00) @db.Decimal(38, 2)
+  ledger       ledger[]
+  orders       orders[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model users {
+  user_id               Int                    @id @default(autoincrement())
+  username              String                 @unique @db.VarChar(255)
+  password              String                 @db.VarChar(255)
+  role                  String?                @default("staff") @db.VarChar(255)
+  shop_id               String?                @db.VarChar(255)
+  email                 String?                @unique(map: "uk6dotkott2kjsp8vw4d0m25fb7") @db.VarChar(255)
+  orders                orders[]
+  password_reset_tokens password_reset_tokens?
+}
